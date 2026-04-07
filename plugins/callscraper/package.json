@@ -5,6 +5,7 @@
   "types": "src/index.ts",
   "dependencies": {
     "@callscrapercrm/core": "workspace:*",
-    "@callscrapercrm/plugin-sdk": "workspace:*"
+    "@callscrapercrm/plugin-sdk": "workspace:*",
+    "@supabase/supabase-js": "^2.45.4"
   }
 }

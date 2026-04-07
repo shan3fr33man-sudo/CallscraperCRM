@@ -5,7 +5,17 @@
  * picks the best available one (cost/reliability order: webhook > rest > fdw > scraper).
  */
 
-export type IngestionMode = "rest" | "webhook" | "fdw" | "scraper";
+export type IngestionMode = "direct" | "webhook" | "rest" | "fdw" | "scraper";
+
+/**
+ * Direct adapter — talks to the upstream system using its native client
+ * (e.g. supabase-js with service key, a Postgres pool, a gRPC client).
+ * Cheapest + most reliable when available.
+ */
+export interface DirectAdapter {
+  pull: (ctx: IngestionContext) => Promise<{ ingested: number }>;
+  schedule?: string;
+}
 
 export interface IngestionContext {
   orgId: string;
@@ -63,6 +73,7 @@ export interface PluginTool {
 export interface Plugin {
   manifest: PluginManifest;
   adapters: {
+    direct?: DirectAdapter;
     rest?: RestAdapter;
     webhook?: WebhookAdapter;
     fdw?: FdwAdapter;
@@ -77,7 +88,7 @@ export function definePlugin(plugin: Plugin): Plugin {
 }
 
 /** Runtime-selectable mode order; first one with an adapter wins. */
-export const MODE_PRIORITY: IngestionMode[] = ["webhook", "rest", "fdw", "scraper"];
+export const MODE_PRIORITY: IngestionMode[] = ["direct", "webhook", "rest", "fdw", "scraper"];
 
 export function pickMode(plugin: Plugin): IngestionMode | null {
   const order = plugin.manifest.preferredModes ?? MODE_PRIORITY;

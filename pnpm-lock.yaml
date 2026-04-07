@@ -67,6 +67,9 @@ importers:
         specifier: ^2.45.4
         version: 2.102.1
     devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.17
       tsx:
         specifier: ^4.19.2
         version: 4.21.0
@@ -110,6 +113,9 @@ importers:
       '@callscrapercrm/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      '@supabase/supabase-js':
+        specifier: ^2.45.4
+        version: 2.102.1
 
 packages:
 

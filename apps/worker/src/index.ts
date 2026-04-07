@@ -14,6 +14,22 @@ const sb = createClient(
 
 const PLUGINS: Plugin[] = [callscraper];
 
+const objectIdCache = new Map<string, string>();
+async function resolveObjectId(orgId: string, key: string): Promise<string> {
+  const cacheKey = `${orgId}:${key}`;
+  const cached = objectIdCache.get(cacheKey);
+  if (cached) return cached;
+  const { data, error } = await sb
+    .from("objects")
+    .select("id")
+    .eq("org_id", orgId)
+    .eq("key", key)
+    .single();
+  if (error || !data) throw new Error(`object not found: ${key} (${error?.message})`);
+  objectIdCache.set(cacheKey, data.id);
+  return data.id;
+}
+
 function ctxFor(orgId: string): IngestionContext {
   return {
     orgId,
@@ -24,9 +40,25 @@ function ctxFor(orgId: string): IngestionContext {
     },
     log: (msg, meta) => console.log(`[ingest] ${msg}`, meta ?? ""),
     async upsertRecord(objectKey, data) {
+      const objectId = await resolveObjectId(orgId, objectKey);
+      // Dedupe on data->>'external_id' when present.
+      const externalId = (data as Record<string, unknown>).external_id as string | undefined;
+      if (externalId) {
+        const { data: existing } = await sb
+          .from("records")
+          .select("id")
+          .eq("org_id", orgId)
+          .eq("object_id", objectId)
+          .eq("data->>external_id", externalId)
+          .maybeSingle();
+        if (existing) {
+          await sb.from("records").update({ data, updated_at: new Date().toISOString() }).eq("id", existing.id);
+          return { id: existing.id };
+        }
+      }
       const { data: row, error } = await sb
         .from("records")
-        .insert({ org_id: orgId, object_id: objectKey, data })
+        .insert({ org_id: orgId, object_id: objectId, data })
         .select("id")
         .single();
       if (error) throw error;
@@ -41,7 +73,10 @@ async function tick(orgId: string) {
     if (!mode) continue;
     const ctx = ctxFor(orgId);
     try {
-      if (mode === "rest" && plugin.adapters.rest) {
+      if (mode === "direct" && plugin.adapters.direct) {
+        const r = await plugin.adapters.direct.pull(ctx);
+        ctx.log(`${plugin.manifest.key}: direct pulled ${r.ingested}`);
+      } else if (mode === "rest" && plugin.adapters.rest) {
         const r = await plugin.adapters.rest.pull(ctx);
         ctx.log(`${plugin.manifest.key}: rest pulled ${r.ingested}`);
       } else if (mode === "scraper" && plugin.adapters.scraper) {
@@ -55,7 +90,7 @@ async function tick(orgId: string) {
   }
 }
 
-const ORG = process.env.SEED_ORG_ID ?? "00000000-0000-0000-0000-000000000000";
+const ORG = process.env.SEED_ORG_ID ?? "00000000-0000-0000-0000-000000000001";
 console.log("CallscraperCRM worker starting…");
 setInterval(() => tick(ORG).catch(console.error), 15 * 60 * 1000);
 tick(ORG).catch(console.error);
