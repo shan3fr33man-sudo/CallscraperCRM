@@ -1,24 +1,16 @@
 import { NextResponse } from "next/server";
 import callscraper from "../../../../../../../plugins/callscraper/src/index";
-import { createClient } from "@supabase/supabase-js";
+import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
 
 export const runtime = "nodejs";
 
 /**
  * Manual sync trigger. Runs the callscraper plugin's direct adapter once
- * against our CRM Supabase. Requires SUPABASE_SERVICE_ROLE_KEY to bypass RLS.
+ * against our CRM Supabase. v0 uses the anon key (RLS is relaxed for single-tenant).
  */
 export async function POST() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    return NextResponse.json(
-      { error: "SUPABASE_SERVICE_ROLE_KEY not set — add it to .env.local to enable mirroring." },
-      { status: 400 },
-    );
-  }
-  const sb = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const orgId = "00000000-0000-0000-0000-000000000001";
+  const sb = crmClient();
+  const orgId = DEFAULT_ORG_ID;
 
   const objCache = new Map<string, string>();
   async function objId(key: string) {

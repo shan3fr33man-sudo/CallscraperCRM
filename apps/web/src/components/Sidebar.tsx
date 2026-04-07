@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Phone, Users, Kanban, Sparkles, Settings, PlugZap, Bot, LayoutDashboard } from "lucide-react";
+import { Phone, Users, Kanban, Search as SearchIcon, Settings, PlugZap, Bot, LayoutDashboard } from "lucide-react";
 
 const items = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/search", label: "Search", icon: SearchIcon },
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
