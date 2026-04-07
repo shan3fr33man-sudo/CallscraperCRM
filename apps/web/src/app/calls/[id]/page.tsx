@@ -1,5 +1,6 @@
 import { TopBar } from "@/components/TopBar";
 import { callscraperClient, type CallRow, type CallSummaryRow } from "@/lib/callscraper";
+import { CallActions } from "@/components/CallActions";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ export default async function CallDetail({ params }: { params: Promise<{ id: str
             <Field label="Direction" value={c.direction} />
             <Field label="Agent ext" value={c.agent_ext} />
           </Section>
-          <Section title="AI">
+          <Section title="Upstream AI (Gemini)">
             <Field label="Sentiment" value={s?.sentiment} />
             <Field label="Intent" value={s?.intent} />
             <Field label="Lead quality" value={s?.lead_quality} />
@@ -48,6 +49,7 @@ export default async function CallDetail({ params }: { params: Promise<{ id: str
             <Field label="Move date" value={s?.move_date} />
             <Field label="Quoted" value={s?.price_quoted} />
           </Section>
+          <CallActions callId={id} />
         </div>
       </div>
     </>

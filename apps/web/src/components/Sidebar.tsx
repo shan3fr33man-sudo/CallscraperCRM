@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Phone, Users, Kanban, Sparkles, Settings, PlugZap } from "lucide-react";
+import { Phone, Users, Kanban, Sparkles, Settings, PlugZap, Bot, LayoutDashboard } from "lucide-react";
 
 const items = [
-  { href: "/", label: "Dashboard", icon: Sparkles },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
+  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/integrations", label: "Integrations", icon: PlugZap },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
