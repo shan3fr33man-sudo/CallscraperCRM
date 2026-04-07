@@ -20,6 +20,18 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "search_transcripts",
+    description: "Full-text search across call transcripts and AI summaries. Use for questions like 'who asked about pianos' or 'mentions of long distance'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        limit: { type: "number" },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "search_leads",
     description: "Search recent leads. Returns up to 20 rows.",
     input_schema: {
@@ -43,6 +55,17 @@ async function runTool(name: string, input: Record<string, unknown>) {
     let q = sb.from("calls").select("id,date,from_number,brand,duration_seconds,call_outcome,resolved_name").gte("date", since).order("date", { ascending: false }).limit(limit);
     if (input.brand) q = q.eq("brand", input.brand as string);
     const { data, error } = await q;
+    if (error) return { error: error.message };
+    return { rows: data };
+  }
+  if (name === "search_transcripts") {
+    const query = (input.query as string) ?? "";
+    const ilike = `%${query}%`;
+    const { data, error } = await sb
+      .from("call_summaries")
+      .select("call_id,summary,transcript")
+      .or(`summary.ilike.${ilike},transcript.ilike.${ilike}`)
+      .limit(limit);
     if (error) return { error: error.message };
     return { rows: data };
   }
