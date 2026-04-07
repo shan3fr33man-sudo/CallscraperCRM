@@ -1,4 +1,4 @@
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createBrowserClient, createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -13,7 +13,8 @@ export async function serverSupabase() {
   return createServerClient(url, anon, {
     cookies: {
       getAll: () => store.getAll(),
-      setAll: (toSet) => toSet.forEach(({ name, value, options }) => store.set(name, value, options)),
+      setAll: (toSet: { name: string; value: string; options: CookieOptions }[]) =>
+        toSet.forEach(({ name, value, options }) => store.set(name, value, options)),
     },
   });
 }
