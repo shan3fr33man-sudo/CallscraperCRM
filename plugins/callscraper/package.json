@@ -1,0 +1,10 @@
+{
+  "name": "@callscrapercrm/plugin-callscraper",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@callscrapercrm/core": "workspace:*",
+    "@callscrapercrm/plugin-sdk": "workspace:*"
+  }
+}
