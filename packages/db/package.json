@@ -1,7 +1,12 @@
 {
   "name": "@callscrapercrm/db",
   "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
     "types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF > src/types.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
   }
 }
