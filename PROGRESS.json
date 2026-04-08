@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "F",
-  "last_completed_task": "Phase F complete — 7 form kinds (opportunity/lead/task/follow_up/estimate/crew_confirmation/ticket), customer_autocomplete w/ inline create, validation + error banner + loading state, NewMenu 6 actions + keyboard shortcuts, NewButton wired across list pages",
-  "current_phase": "G",
-  "current_task": "Callscraper sync v2 — cursor-based pagination, delta ingestion, upstream → CRM mirroring of calls/summaries/opportunities",
+  "last_completed_phase": "G",
+  "last_completed_task": "Phase G complete — callscraper sync v2 shipped: phone.ts, sync-state.ts, upsert-customer.ts, sync-callscraper-v2.ts (syncCalls/syncCallSummaries/syncLeads/runFullSync with sync.run.completed events + per-entity error isolation), /api/sync/callscraper POST + GET, vercel.json crons (15m delta + hourly full), /api/sync/status, /settings/integrations/callscraper UI, /api/calls/recent prefers CRM activities and falls back to upstream, sales command center leaderboard falls back to brand grouping until real assignments exist",
+  "current_phase": "H",
+  "current_task": "AI tools on every page — per-section Claude sidebar context, coaching rubric, /sales/coaching page, Estimate Drafter agent",
   "blockers": [],
   "next_3_tasks": [
-    "apps/worker/src/sync-callscraper-v2.ts — cursor-based sync runner",
-    "Store sync_cursor per entity in a sync_state table",
-    "Cron: every 2m delta sync, every 60m full reconciliation"
+    "Extend /api/ai/chat with tools: create_opportunity, create_task, book_job, send_template, search_customers, get_customer_timeline",
+    "Build Estimate Drafter agent: read opportunity → draft charges_json → human approval flow",
+    "/sales/coaching page + local rubric classifier in packages/pricing or packages/shared-types"
   ],
   "test_status": "tsc clean; vocab clean; href# zero; schemas verified via MCP",
   "build_status": "tsc_clean",
-  "last_commit": "phase-F7: smoke gates - schema verified, priority int fix, estimates/opportunities POST hardened"
+  "last_commit": "phase-G8: sales command center wired to synced data [tsc: clean]"
 }
