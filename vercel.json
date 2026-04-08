@@ -2,6 +2,8 @@
   "crons": [
     { "path": "/api/sync/callscraper", "schedule": "*/15 * * * *" },
     { "path": "/api/sync/callscraper?full=true", "schedule": "0 * * * *" },
-    { "path": "/api/agents/coach-calls", "schedule": "0 8 * * *" }
+    { "path": "/api/agents/coach-calls", "schedule": "0 8 * * *" },
+    { "path": "/api/automations/run", "schedule": "*/5 * * * *" },
+    { "path": "/api/tasks/scan-due", "schedule": "0 14 * * *" }
   ]
 }
