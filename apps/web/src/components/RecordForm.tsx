@@ -1,7 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+// RecordForm contract — form kinds:
+//   opportunity, lead, task, follow_up  (existed pre-Phase F; hardened in F2)
+//   estimate                            (added in F4)
+//   crew_confirmation                   (added in F4)
+//   ticket                              (added in F4)
+// Field types: text, number, date, datetime, select, remote_select,
+//   customer_autocomplete (F3), textarea (F4), checkbox (F4), line_items (F4)
+import { useEffect, useState, type ReactNode } from "react";
 
-export type FormKind = "opportunity" | "lead" | "task" | "follow_up";
+export type FormKind = "opportunity" | "lead" | "task" | "follow_up" | "estimate" | "crew_confirmation" | "ticket";
 
 type Field =
   | { key: string; label: string; type: "text" | "number" | "date" | "datetime"; required?: boolean }
