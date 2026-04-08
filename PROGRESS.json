@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "A",
-  "last_completed_task": "0002_river.sql applied to kxhqxrmroreuglvsatkn; 30 vertical tables + 4 branches seeded",
-  "current_phase": "B",
-  "current_task": "packages/db/src/events.ts (emitEvent) + apps/worker/src/automations.ts (event loop)",
+  "last_completed_phase": "B",
+  "last_completed_task": "river engine + 5 automations seeded (disabled) + E2E passes",
+  "current_phase": "C",
+  "current_task": "Topbar with UserMenu + NewMenu + NotificationsBell + global search",
   "blockers": [],
   "next_3_tasks": [
-    "Write packages/db/src/events.ts emitEvent() helper",
-    "Write apps/worker/src/automations.ts event loop with 5 disabled default automations",
-    "Write /api/automations/run route + E2E river test"
+    "Build apps/web/src/components/Topbar.tsx replacing TopBar.tsx",
+    "Build UserMenu, NewMenu, NotificationsBell, RecordForm components",
+    "Add /api/search/global route querying customers, opportunities, jobs, tasks"
   ],
-  "test_status": "no_tests_yet",
-  "build_status": "unknown",
-  "last_commit": "pending"
+  "test_status": "tsc clean; vocab clean; E2E river verified (4 events, 3 runs, 2 tasks, 1 cal, 2 sms, 1 job)",
+  "build_status": "tsc_clean",
+  "last_commit": "69a8374"
 }

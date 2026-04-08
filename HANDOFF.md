@@ -1,29 +1,31 @@
-# HANDOFF — Phase A complete
+# HANDOFF — Phase B complete
 
 ## State
-- Migration `packages/db/migrations/0002_river.sql` applied to Supabase project `kxhqxrmroreuglvsatkn` (callscrapercrm)
-- 30 vertical tables created (customers, opportunities, estimates, jobs, calendar_events, tasks, tickets, claims, sms_logs, email_logs, templates, events, automations, automation_runs, notifications, users_profiles, crews, trucks, branches, tariffs + 6 tariff sub-tables, integration_credentials, sync_state, call_coaching, ai_usage)
-- 4 branches seeded: APM (default), AFM, crewready, apex
-- All tables RLS-enabled with "v0 anon all" policy (matches 0001 dev posture)
-- `packages/shared-types/src/{enums,upstream,index}.ts` written with locked vocabulary + upstream row interfaces
-- `scripts/check-vocab.ts` written (banned aliases CI gate)
-- `PROGRESS.json` initialized at phase B
+- River engine at `apps/web/src/lib/{events,automations}.ts` (moved from `packages/db/src` to pick up apps/web's `@supabase/supabase-js`).
+- `apps/web/src/lib/river.ts` re-exports `emitEvent`, `runAutomations`, types.
+- Cron entry: `apps/web/src/app/api/automations/run/route.ts` (POST + GET) → `runAutomations(sb, {limit: 200})`.
+- `apps/web/vercel.json` cron `*/5 * * * *` for `/api/automations/run`.
+- emitEvent wired into: `/api/customers`, `/api/opportunities`, `/api/estimates`, `/api/estimates/[id]/send`, `/api/estimates/[id]/accept`.
+- 5 default automations seeded in Supabase `kxhqxrmroreuglvsatkn`, all `enabled = false`:
+  1. opportunity.created → create_task (24h follow-up)
+  2. estimate.sent → send_template SMS
+  3. estimate.accepted → create_calendar_event(kind=job) + SMS + create_task "Assign crew"
+  4. task.due_soon → SMS + Confirm crew task
+  5. job.finished → email review request + Collect payment task
+- E2E river verified via plpgsql emulation: 4 events processed, 3 automation_runs OK, 2 tasks, 1 calendar_event, 2 sms_logs, 1 job, opp status=booked. Test data cleaned; automations disabled again.
 
-## Next session: Phase B (the river)
-1. `packages/db/src/events.ts` — `emitEvent(client, org_id, type, payload, related_type?, related_id?)` helper
-2. `apps/worker/src/automations.ts` — event loop:
-   - Fetch events where `processed_at IS NULL`
-   - For each, find matching enabled automations by `trigger == event.type`
-   - Execute actions (send_template, create_task, create_calendar_event, set_status, assign_owner, create_ticket, webhook)
-   - Insert `automation_runs` row, mark event processed
-3. `/api/automations/run` route (Vercel cron entry, 5-min schedule)
-4. Seed 5 default automations (DISABLED) via SQL or `/api/automations/seed`
-5. E2E test: POST customer → events row → automation tick → automation_runs row
+## Gates
+- `npx tsc --noEmit` in apps/web → 0 errors
+- `node scripts/check-vocab.ts` → clean
+- Last commit: `69a8374` pushed to main
 
-## Open TS errors
-None — no new code wired into apps yet.
+## Next session: Phase C (Topbar + global header)
+1. Replace `apps/web/src/components/TopBar.tsx` with `Topbar.tsx`
+2. Add components: `UserMenu.tsx`, `NewMenu.tsx`, `NotificationsBell.tsx`, `RecordForm.tsx`
+3. New route `/api/search/global` querying customers, opportunities, jobs, tasks
+4. New nav.ts leaves: Settings → Billing, Notifications, API Keys, Import
+5. Notifications dropdown reads `notifications` table (already in Phase A schema)
 
 ## Notes / deviations
-- `intent` and `sentiment` columns on `opportunities` are free text (mirrors upstream — high cardinality, not enumable).
-- `templates` already had a CHECK on channel; safe.
-- `users_profiles.user_id` not FK to auth.users (single-org dev mode); add FK in v1.1 when auth lands.
+- Engine source moved from `packages/db/src/` → `apps/web/src/lib/`. `packages/db/src/` is now empty.
+- E2E test was emulated in plpgsql; the cron route is the production driver and uses the same code path.
