@@ -72,13 +72,24 @@ export default function SalesCommandCenter() {
     booked: opps.filter((o) => o.status === "booked").length,
   };
 
-  // Leaderboard by assigned_to
+  // Leaderboard: prefer assigned_to, fall back to brand grouping (until real assignments exist)
   const board = new Map<string, number>();
+  let hasAssignments = false;
   opps.forEach((o) => {
-    if (o.status === "booked" && o.assigned_to) {
-      board.set(String(o.assigned_to), (board.get(String(o.assigned_to)) ?? 0) + 1);
-    }
+    if (o.assigned_to) hasAssignments = true;
   });
+  if (hasAssignments) {
+    opps.forEach((o) => {
+      if (o.status === "booked" && o.assigned_to) {
+        board.set(String(o.assigned_to), (board.get(String(o.assigned_to)) ?? 0) + 1);
+      }
+    });
+  } else {
+    calls.forEach((c) => {
+      const key = c.brand ?? "unknown";
+      board.set(key, (board.get(key) ?? 0) + 1);
+    });
+  }
   const leaders = Array.from(board.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
   return (
