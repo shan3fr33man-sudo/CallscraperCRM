@@ -44,14 +44,13 @@ export async function POST(req: Request) {
   return NextResponse.json({ opportunity: data });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const sb = crmClient();
-  const { data, error } = await sb
-    .from("opportunities")
-    .select("*")
-    .eq("org_id", DEFAULT_ORG_ID)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { searchParams } = new URL(req.url);
+  const customerId = searchParams.get("customer_id");
+  let q = sb.from("opportunities").select("*").eq("org_id", DEFAULT_ORG_ID);
+  if (customerId) q = q.eq("customer_id", customerId);
+  const { data, error } = await q.order("created_at", { ascending: false }).limit(100);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ opportunities: data });
 }
