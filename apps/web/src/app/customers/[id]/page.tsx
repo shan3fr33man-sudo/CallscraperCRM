@@ -103,7 +103,12 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="p-4 text-sm">
               {tab === "Sales" && <RowList rows={opps} columns={["status", "service_type", "service_date", "amount", "source"]} empty="No opportunities yet." />}
-              {tab === "Estimate" && <RowList rows={opps.filter((o) => o.amount)} columns={["service_type", "service_date", "amount", "status"]} empty="No estimates drafted." />}
+              {tab === "Estimate" && (
+                <div className="space-y-3">
+                  <DraftEstimateButton opportunityId={String(opps[0]?.id ?? "")} />
+                  <RowList rows={opps.filter((o) => o.amount)} columns={["service_type", "service_date", "amount", "status"]} empty="No estimates drafted." />
+                </div>
+              )}
               {tab === "Storage" && <div className="text-xs text-muted-foreground">No storage accounts.</div>}
               {tab === "Files" && <div className="text-xs text-muted-foreground">No files uploaded.</div>}
               {tab === "Accounting" && <RowList rows={jobs} columns={["quote_number", "status", "service_date", "billed"]} empty="No billed jobs." />}
@@ -167,6 +172,53 @@ function RowList({ rows, columns, empty }: { rows: Row[]; columns: string[]; emp
           {columns.map((c) => <div key={c}>{String(r[c] ?? "—")}</div>)}
         </div>
       ))}
+    </div>
+  );
+}
+
+function DraftEstimateButton({ opportunityId }: { opportunityId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ estimate_id?: string; estimated_total?: number; confidence?: string; error?: string } | null>(null);
+
+  async function run() {
+    if (!opportunityId) {
+      setResult({ error: "No opportunity to draft against." });
+      return;
+    }
+    setLoading(true);
+    setResult(null);
+    try {
+      const r = await fetch("/api/agents/draft-estimate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      });
+      const j = await r.json();
+      setResult(j);
+    } catch (e) {
+      setResult({ error: (e as Error).message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const confColor =
+    result?.confidence === "high" ? "bg-green-100 text-green-700 border-green-300" :
+    result?.confidence === "medium" ? "bg-yellow-100 text-yellow-700 border-yellow-300" :
+    result?.confidence === "low" ? "bg-red-100 text-red-700 border-red-300" : "";
+
+  return (
+    <div className="flex items-center gap-2 pb-2 border-b border-border">
+      <button onClick={run} disabled={loading || !opportunityId} className="text-xs px-3 py-1.5 rounded-md bg-accent text-white disabled:opacity-50">
+        {loading ? "Drafting…" : "Draft with AI"}
+      </button>
+      {result?.estimated_total != null && (
+        <>
+          <div className="text-xs">Drafted: <span className="font-semibold">${result.estimated_total}</span></div>
+          {result.confidence && <span className={`text-[10px] px-2 py-0.5 rounded border ${confColor}`}>{result.confidence}</span>}
+        </>
+      )}
+      {result?.error && <div className="text-xs text-red-600">{result.error}</div>}
     </div>
   );
 }
