@@ -3,6 +3,7 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
 import { OpportunityDrawer } from "@/components/OpportunityDrawer";
+import { NewButton } from "@/components/NewButton";
 
 const STATUSES = [
   { value: "new", label: "New" },
@@ -50,6 +51,7 @@ export default function NewLeadsPage() {
             { key: "source", label: "Source", type: "chip", options: SOURCES },
             { key: "status", label: "Status", type: "chip", options: STATUSES },
           ]}
+          actions={<NewButton kind="lead" label="New Lead" />}
           emptyMessage="No new leads. Inbound calls will create new opportunities here."
         />
         {selected && <OpportunityDrawer opp={selected as Row & { id: string }} onClose={() => setSelected(null)} />}

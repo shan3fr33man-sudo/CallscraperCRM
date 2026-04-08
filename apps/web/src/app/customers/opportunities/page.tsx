@@ -3,6 +3,7 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
 import { OpportunityDrawer } from "@/components/OpportunityDrawer";
+import { NewButton } from "@/components/NewButton";
 
 export default function CustomersOpportunitiesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
@@ -31,6 +32,7 @@ export default function CustomersOpportunitiesPage() {
             { key: "status", label: "Status", type: "chip", options: [
               { value: "new", label: "New" }, { value: "quoted", label: "Quoted" }, { value: "booked", label: "Booked" }, { value: "lost", label: "Lost" }] },
           ]}
+          actions={<NewButton kind="opportunity" />}
           emptyMessage="No opportunities yet."
         />
         {selected && <OpportunityDrawer opp={selected as Row & { id: string }} onClose={() => setSelected(null)} />}

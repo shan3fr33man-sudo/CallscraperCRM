@@ -3,6 +3,7 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
 import { OpportunityDrawer } from "@/components/OpportunityDrawer";
+import { NewButton } from "@/components/NewButton";
 
 export default function MyLeadsPage() {
   const [selected, setSelected] = useState<Row | null>(null);
@@ -26,6 +27,7 @@ export default function MyLeadsPage() {
             { key: "amount", label: "Amount", render: (r) => <span>${String(r.amount ?? 0)}</span> },
             { key: "source", label: "Source" },
           ]}
+          actions={<NewButton kind="lead" label="New Lead" />}
           emptyMessage="No leads assigned to you yet."
         />
         {selected && <OpportunityDrawer opp={selected as Row & { id: string }} onClose={() => setSelected(null)} />}

@@ -1,6 +1,7 @@
 "use client";
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
+import { NewButton } from "@/components/NewButton";
 
 export default function ActiveTicketsPage() {
   async function load(): Promise<Row[]> {
@@ -35,6 +36,7 @@ export default function ActiveTicketsPage() {
               </div>
             ) },
           ]}
+          actions={<NewButton kind="ticket" />}
           emptyMessage="No active tickets."
         />
       </div>

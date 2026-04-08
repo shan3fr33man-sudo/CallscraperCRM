@@ -1,6 +1,7 @@
 "use client";
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
+import { NewButton } from "@/components/NewButton";
 
 export default function FollowUpsPage() {
   async function fetchTasks(): Promise<Row[]> {
@@ -21,6 +22,7 @@ export default function FollowUpsPage() {
             { key: "assigned_to", label: "Assigned To" },
             { key: "priority", label: "Priority" },
           ]}
+          actions={<NewButton kind="follow_up" label="New Follow-up" />}
           emptyMessage="No sales follow-ups scheduled."
         />
       </div>
