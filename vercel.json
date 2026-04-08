@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/sync/callscraper", "schedule": "*/15 * * * *" },
+    { "path": "/api/sync/callscraper?full=true", "schedule": "0 * * * *" }
+  ]
+}
