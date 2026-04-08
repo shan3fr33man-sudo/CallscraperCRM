@@ -1,0 +1,15 @@
+{
+  "last_completed_phase": "A",
+  "last_completed_task": "0002_river.sql applied to kxhqxrmroreuglvsatkn; 30 vertical tables + 4 branches seeded",
+  "current_phase": "B",
+  "current_task": "packages/db/src/events.ts (emitEvent) + apps/worker/src/automations.ts (event loop)",
+  "blockers": [],
+  "next_3_tasks": [
+    "Write packages/db/src/events.ts emitEvent() helper",
+    "Write apps/worker/src/automations.ts event loop with 5 disabled default automations",
+    "Write /api/automations/run route + E2E river test"
+  ],
+  "test_status": "no_tests_yet",
+  "build_status": "unknown",
+  "last_commit": "pending"
+}
