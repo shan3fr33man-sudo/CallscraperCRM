@@ -54,7 +54,7 @@ const TASK_FIELDS: Field[] = [
 const FOLLOWUP_FIELDS: Field[] = TASK_FIELDS.filter((f) => f.key !== "type");
 
 const TICKET_TYPES = ["damage", "service_complaint", "billing", "inquiry", "compliment", "other"].map((v) => ({ value: v, label: v }));
-const TICKET_PRIORITIES = ["low", "medium", "high", "critical"].map((v) => ({ value: v, label: v }));
+const TICKET_PRIORITIES = [{ value: "1", label: "low" }, { value: "2", label: "medium" }, { value: "3", label: "high" }, { value: "4", label: "critical" }];
 
 const ESTIMATE_FIELDS: Field[] = [
   { key: "opportunity_id", label: "Opportunity", type: "remote_select", endpoint: "/api/opportunities", valueKey: "id", labelKey: "customer_name", required: true },
@@ -80,7 +80,6 @@ const TICKET_FIELDS: Field[] = [
   { key: "ticket_name", label: "Ticket name", type: "text", required: true },
   { key: "type", label: "Type", type: "select", options: TICKET_TYPES },
   { key: "priority", label: "Priority", type: "select", options: TICKET_PRIORITIES },
-  { key: "description", label: "Description", type: "textarea" },
   { key: "assigned_to", label: "Assigned to", type: "text" },
 ];
 
@@ -278,8 +277,7 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
             job_id: values.job_id || null,
             ticket_name: values.ticket_name,
             type: values.type,
-            priority: values.priority,
-            description: values.description,
+            priority: values.priority ? Number(values.priority) : 3,
             assigned_to: values.assigned_to || null,
             status: "active",
           }),

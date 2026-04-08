@@ -18,7 +18,6 @@ export async function POST(req: Request) {
       sales_tax: body.sales_tax ?? 0,
       amount: body.amount ?? (body.estimated_total ?? 0),
       valid_until: body.valid_until ?? null,
-      notes: body.notes ?? null,
     })
     .select("*")
     .single();

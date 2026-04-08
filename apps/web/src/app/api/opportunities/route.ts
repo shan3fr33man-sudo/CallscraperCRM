@@ -22,6 +22,10 @@ export async function POST(req: Request) {
       source: body.source ?? null,
       amount: body.amount ?? 0,
       lead_quality: body.lead_quality ?? null,
+      branch_id: body.branch_id ?? null,
+      assigned_to: body.assigned_to ?? null,
+      origin_json: body.origin_address ? { address: body.origin_address } : null,
+      destination_json: body.destination_address ? { address: body.destination_address } : null,
     })
     .select("*")
     .single();
