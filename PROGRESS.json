@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "D",
-  "last_completed_task": "Calendar (office + job + rate-overrides) with FullCalendar, drag-reschedule, EventDetailDrawer, 7am task.due_soon cron",
-  "current_phase": "E",
-  "current_task": "Per-section page backfill — sales/new-leads, customers/[id] detail, dispatch command center",
+  "last_completed_phase": "E",
+  "last_completed_task": "Phase E backfill complete — EntityTable, sales pages, customers/[id] 7-tab detail, dispatch + sales command centers, tickets, scheduling, tasks 4 views, customers/opportunities, accounting/jobs/[status]",
+  "current_phase": "F",
+  "current_task": "+ New forms: Opportunity / Lead / Task / Follow-up via slide-in RecordForm",
   "blockers": [],
   "next_3_tasks": [
-    "Build EntityTable component for list views",
-    "/sales/new-leads with new-leads opportunity columns",
-    "/customers/[id] detail page with 7 opportunity-detail tabs"
+    "Build RecordForm.tsx (JSON-driven slide-in form)",
+    "Wire NewMenu split-button in Topbar to open the 4 forms",
+    "Submit handlers POST to /api/{opportunities,tasks} and emit river events"
   ],
-  "test_status": "tsc clean; vocab clean; href# zero",
-  "build_status": "tsc_clean",
-  "last_commit": "pending phase-D8"
+  "test_status": "tsc clean; vocab clean; href# zero; next build green",
+  "build_status": "build_green",
+  "last_commit": "phase-E6: tickets active/completed + dispatch/scheduling + tasks 4 views + customers/opportunities + accounting/jobs/[status] + tasks/[id] PATCH"
 }

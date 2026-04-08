@@ -1,35 +1,47 @@
-# HANDOFF — Phase D complete
+# Handoff — End of Phase E
 
-## State
-- FullCalendar installed: `@fullcalendar/{react,daygrid,timegrid,interaction,core}` v6.1.20.
-- `apps/web/src/components/CalendarView.tsx` — dynamic-imported (`ssr: false`), renders week/day/month, drag-reschedule fires `PATCH /api/calendar-events/[id]`, eventClick opens `EventDetailDrawer`. Toast on success/revert.
-- `apps/web/src/components/EventDetailDrawer.tsx` — slide-in sheet. Shows title/type/when/location/related link. Buttons: Reschedule (inline date pickers), Edit (same), Cancel Event (DELETE with confirm).
-- `apps/web/src/app/api/calendar-events/route.ts` — GET extended with filters: `kind`, `branch_id`, `owner_id`, `event_type`, `start`, `end`. Returns FullCalendar shape `{id, title, start, end, allDay, color, extendedProps}`. Color seeded from event_type. POST emits `calendar_event.created`.
-- `apps/web/src/app/api/calendar-events/[id]/route.ts` — PATCH (emits `job.rescheduled` if kind=job, else `calendar_event.updated`) and DELETE.
-- Pages:
-  - `/calendars/office` — Users + Branch + Type chip filters, "+ New Office Event" modal posts to `/api/calendar-events`.
-  - `/calendars/job` — Branch + Job Type chips + Distance filter (job-type/distance are display-only until jobs table joins land in Phase E). No "+ New" — jobs created via estimate flow.
-  - `/calendars/rate-overrides` — table of `tariff_modifiers` where `kind in (holiday|peak_season|weekend|other)`, "+ Add Override" modal POSTs `/api/rate-overrides` (auto-creates a default tariff if none exists).
-- New API: `/api/rate-overrides` (GET/POST), `/api/tasks/scan-due` (GET/POST).
-- `vercel.json` cron added: `/api/tasks/scan-due` daily at `0 14 * * *` (14:00 UTC = 7:00 AM Pacific). Emits `task.due_soon` for tasks due in next 24h.
-- D9 verification: Phase B automation #3 (`estimate.accepted` → `create_calendar_event(kind=job)`) was already proven in the Phase B E2E test (1 calendar_event row). Cron-driven river writes the row when the automation is enabled.
+## Status
+Phase E complete. `next build` green, `tsc --noEmit` clean, vocab clean, zero `href="#"`.
 
-## Gates
-- `npx tsc --noEmit` in apps/web → 0 errors
-- `node scripts/check-vocab.ts` → clean
-- `grep href="#"` → 0 results
-- Commits: `8ee15ca` (D1) → `8c8d60e` (D2) → `167a5c2` (D3+D4) → `5a9e511` (D5+D6+D7) → pending (D8)
+## Phase E shipped
+- `apps/web/src/components/EntityTable.tsx` — generic list view (filters/sort/pagination)
+- `apps/web/src/components/OpportunityDrawer.tsx` — slide-in opp drawer with activity feed
+- `/sales/new-leads`, `/sales/my-leads`, `/sales/follow-ups`
+- `/sales/command-center` — live calls (left) + funnel (center) + leaderboard (right), 60s auto-refresh, reads `/api/calls/recent` from upstream callscraper
+- `/dispatch/command-center` — today's jobs board, status strip, problem flags (no crew / no truck / unconfirmed), bulk Customer/Crew confirmation SMS, Advance status button
+- `/dispatch/scheduling` — next 14 days
+- `/customers/[id]` — 7-tab detail page (Sales / Estimate / Storage / Files / Accounting / Profitability / Claims) + activity feed (All/Note/Email/Call/Text), inline customer edit
+- `/customers/opportunities` — all opportunities with status filter
+- `/customer-service/tickets/active`, `/customer-service/tickets/completed`
+- `/tasks/{open,due-today,overdue,completed}`
+- `/accounting/jobs/[status]` — 4 status routes (pending-finalize / pending-close / closed / all)
+- API routes: `/api/jobs`, `/api/jobs/[id]` (PATCH emits `job.<status>`), `/api/tickets`, `/api/tickets/[id]` (PATCH emits `ticket.closed` / `ticket.escalated`), `/api/activities`, `/api/claims` (POST emits `claim.opened`), `/api/customers/[id]`, `/api/calls/recent`, `/api/messages/send` (writes `sms_logs`, emits `message.queued`), `/api/tasks/[id]` (PATCH emits `task.completed`), `/api/opportunities` GET now accepts `?customer_id`
 
-## Notes / deviations
-- FullCalendar wrapped in `next/dynamic({ssr:false})` to avoid SSR `window` errors.
-- D7 rate overrides reuses `tariff_modifiers` table (Phase A schema) — workspace-level "Default Tariff" is auto-created on first POST.
-- D8 cron also exposes a GET so it can be tested by hitting the URL directly.
-- Office event_types color-coded: on_site_estimate #3B82F6, virtual_survey #8B5CF6, phone_survey #F59E0B, box_delivery #10B981, liveswitch_survey #EC4899, other #6B7280, move (job) #EF4444.
+## Vocab compliance
+All new code uses locked names: `customer_name`, `customer_phone`, `customer_email`, `assigned_to`, `status` (not `opp_status`), `amount`, `quote_number`. Event types emitted: `job.confirmed`, `job.en_route`, `job.finished`, `ticket.opened`, `ticket.closed`, `ticket.escalated`, `claim.opened`, `task.completed`, `message.queued`.
 
-## Next session: Phase E — Per-section page backfill
-1. Build `EntityTable.tsx` component (Supabase query + columns config + filter chips + drawer)
-2. `/sales/new-leads` with opp columns (Status, Type, Service Date, Name, Branch, Address, Move Size, Source, Age)
-3. `/customers/[id]` detail page with 7 tabs (Sales / Estimate / Storage / Files / Accounting / Profitability / Claims) and Activity sub-tabs (Note/Email/Call/Text)
-4. `/dispatch/command-center` (flagship — Gantt by crew × time, drag-to-reassign)
-5. `/sales/command-center` (flagship — live call feed, conversion funnel, leaderboard)
-6. `/customer-service/tickets/{active,completed}`, `/dispatch/scheduling`, `/tasks/*` filtered views
+## Open caveats
+- `/api/messages/send` is a stub — writes to `sms_logs` and emits but no provider wired (Twilio/Resend = v1.1)
+- Tasks GET capped at 50 rows server-side; filtered client-side. Bump if needed.
+- Dispatch command center "Advance" cycles statuses linearly; no skip/back
+- Customer Files / Storage / Profitability tabs are placeholders (no upload/storage tables yet)
+- `/sales/command-center` createOppFromCall does not link customer_id (no phone→customer lookup yet)
+
+## Last commit
+`phase-E6: tickets active/completed + dispatch/scheduling + tasks 4 views + customers/opportunities + accounting/jobs/[status] + tasks/[id] PATCH [tsc: clean]`
+
+## Next: Phase F — "+ New" forms
+
+Build slide-in `RecordForm` driven by JSON field config and wire 4 canonical forms:
+
+1. **`apps/web/src/components/RecordForm.tsx`** — slide-in panel, fields: text/select/date/textarea/customer-autocomplete, validation, submit handler returns the created row id
+2. **`apps/web/src/components/NewMenu.tsx`** — split-button dropdown in TopBar with 4 actions (Opportunity / Lead / Task / Follow-up); opens RecordForm with the right config
+3. Field configs (4):
+   - **New Opportunity**: customer (autocomplete or inline-create), service_type, service_date, move_size, branch, source, assigned_to, amount → POST `/api/opportunities`
+   - **New Lead**: same shape but always `status='new'`; after create, optionally trigger Lead Triage agent
+   - **New Task**: title, due_at, assigned_to, type, priority, related_type/related_id (optional) → POST `/api/tasks`
+   - **New Follow-up**: shortcut for tasks with `type='follow_up'` AND auto-creates a `calendar_events` row (kind='office', event_type='other') at the same due time
+4. Wire `NewMenu` into `TopBar.tsx` so it appears on every page
+5. Smoke test: open each of the 4 forms, submit, confirm row appears in destination list page and `events` row was emitted
+
+After Phase F: Phase G (callscraper sync v2) and Phase H (AI tools extension on `/api/ai/chat`).
