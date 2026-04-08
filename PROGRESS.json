@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "E",
-  "last_completed_task": "Phase E backfill complete — EntityTable, sales pages, customers/[id] 7-tab detail, dispatch + sales command centers, tickets, scheduling, tasks 4 views, customers/opportunities, accounting/jobs/[status]",
-  "current_phase": "F",
-  "current_task": "+ New forms: Opportunity / Lead / Task / Follow-up via slide-in RecordForm",
+  "last_completed_phase": "F",
+  "last_completed_task": "Phase F complete — 7 form kinds (opportunity/lead/task/follow_up/estimate/crew_confirmation/ticket), customer_autocomplete w/ inline create, validation + error banner + loading state, NewMenu 6 actions + keyboard shortcuts, NewButton wired across list pages",
+  "current_phase": "G",
+  "current_task": "Callscraper sync v2 — cursor-based pagination, delta ingestion, upstream → CRM mirroring of calls/summaries/opportunities",
   "blockers": [],
   "next_3_tasks": [
-    "Build RecordForm.tsx (JSON-driven slide-in form)",
-    "Wire NewMenu split-button in Topbar to open the 4 forms",
-    "Submit handlers POST to /api/{opportunities,tasks} and emit river events"
+    "apps/worker/src/sync-callscraper-v2.ts — cursor-based sync runner",
+    "Store sync_cursor per entity in a sync_state table",
+    "Cron: every 2m delta sync, every 60m full reconciliation"
   ],
-  "test_status": "tsc clean; vocab clean; href# zero; next build green",
-  "build_status": "build_green",
-  "last_commit": "phase-E6: tickets active/completed + dispatch/scheduling + tasks 4 views + customers/opportunities + accounting/jobs/[status] + tasks/[id] PATCH"
+  "test_status": "tsc clean; vocab clean; href# zero; schemas verified via MCP",
+  "build_status": "tsc_clean",
+  "last_commit": "phase-F7: smoke gates - schema verified, priority int fix, estimates/opportunities POST hardened"
 }
