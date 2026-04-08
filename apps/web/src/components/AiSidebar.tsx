@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { X, Send } from "lucide-react";
+import { QUICK_ACTIONS } from "@/lib/ai-quick-actions";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -16,9 +17,10 @@ export function AiSidebar({ onClose, context }: { onClose: () => void; context?:
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function send() {
-    if (!input.trim() || loading) return;
-    const next: Msg[] = [...messages, { role: "user", content: input }];
+  async function send(override?: string) {
+    const text = (override ?? input).trim();
+    if (!text || loading) return;
+    const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages(next);
     setInput("");
     setLoading(true);
@@ -64,6 +66,19 @@ export function AiSidebar({ onClose, context }: { onClose: () => void; context?:
           ))}
           {loading && <div className="text-muted text-xs">thinking…</div>}
         </div>
+        {messages.length === 0 && !input && context?.page && QUICK_ACTIONS[context.page] && (
+          <div className="border-t border-border p-3 flex flex-wrap gap-1.5">
+            {QUICK_ACTIONS[context.page].slice(0, 4).map((q) => (
+              <button
+                key={q}
+                onClick={() => send(q)}
+                className="text-[10px] px-2 py-1 rounded-full border border-border hover:bg-accent/10 text-left"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="border-t border-border p-3 flex gap-2">
           <input
             value={input}
@@ -73,7 +88,7 @@ export function AiSidebar({ onClose, context }: { onClose: () => void; context?:
             className="flex-1 bg-bg border border-border rounded px-3 py-2 text-sm outline-none focus:border-accent"
           />
           <button
-            onClick={send}
+            onClick={() => send()}
             disabled={loading}
             className="px-3 rounded bg-accent text-white text-sm disabled:opacity-50"
           >
