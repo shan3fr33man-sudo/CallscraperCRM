@@ -6,7 +6,8 @@
 //   ticket                              (added in F4)
 // Field types: text, number, date, datetime, select, remote_select,
 //   customer_autocomplete (F3), textarea (F4), checkbox (F4), line_items (F4)
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type FormKind = "opportunity" | "lead" | "task" | "follow_up" | "estimate" | "crew_confirmation" | "ticket";
 
@@ -57,9 +58,10 @@ function configFor(kind: FormKind): { title: string; fields: Field[] } {
   return { title: "New Follow-up", fields: FOLLOWUP_FIELDS };
 }
 
-export function RecordForm({ kind, onClose }: { kind: FormKind; onClose: () => void }) {
+export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose: () => void; prefill?: Record<string, string> }) {
   const cfg = configFor(kind);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const router = useRouter();
+  const [values, setValues] = useState<Record<string, string>>(prefill ?? {});
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [remoteOpts, setRemoteOpts] = useState<Record<string, { value: string; label: string }[]>>({});
@@ -84,26 +86,39 @@ export function RecordForm({ kind, onClose }: { kind: FormKind; onClose: () => v
     setErr(null);
     try {
       if (kind === "opportunity" || kind === "lead") {
-        // Step 1: ensure customer
-        let customer_id: string | undefined;
-        if (values.customer_name) {
+        let customer_id: string | undefined = values.customer_id || undefined;
+        if (!customer_id && values.customer_name) {
           const cr = await fetch("/api/customers", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customer_name: values.customer_name, customer_phone: values.customer_phone ?? null }) });
           const cj = await cr.json();
           customer_id = cj.customer?.id;
         }
         const body = {
           customer_id,
-          status: kind === "lead" ? "new" : "new",
+          customer_name: values.customer_name,
+          customer_phone: values.customer_phone,
+          status: "new",
           service_type: values.service_type,
           service_date: values.service_date || null,
           move_size: values.move_size,
-          branch: values.branch_id ? null : null,
+          origin_address: values.origin_address,
+          destination_address: values.destination_address,
+          branch_id: values.branch_id || null,
           opportunity_type: values.opportunity_type,
           source: values.source,
+          assigned_to: values.assigned_to || null,
           amount: values.amount ? Number(values.amount) : 0,
         };
         const r = await fetch("/api/opportunities", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
         if (!r.ok) throw new Error((await r.json()).error ?? "failed");
+        if (kind === "lead" && values.run_triage !== "false") {
+          const rj = await r.json().catch(() => null);
+          if (rj?.opportunity?.id) {
+            fetch(`/api/agents/analyze-call?lead_triage=true&opportunity_id=${rj.opportunity.id}`, { method: "POST" }).catch(() => null);
+          }
+        }
+        onClose();
+        router.push("/sales/new-leads");
+        return;
       } else if (kind === "task") {
         const body = {
           title: values.title,
@@ -115,7 +130,11 @@ export function RecordForm({ kind, onClose }: { kind: FormKind; onClose: () => v
         };
         const r = await fetch("/api/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
         if (!r.ok) throw new Error((await r.json()).error ?? "failed");
-      } else {
+        onClose();
+        const today = new Date().toISOString().slice(0, 10);
+        router.push(values.due_at?.slice(0, 10) === today ? "/tasks/due-today" : "/tasks/open");
+        return;
+      } else if (kind === "follow_up") {
         // follow_up: BOTH a task row and a calendar_events row
         const taskBody = {
           title: values.title,
@@ -134,8 +153,11 @@ export function RecordForm({ kind, onClose }: { kind: FormKind; onClose: () => v
           await fetch("/api/calendar-events", {
             method: "POST", headers: { "content-type": "application/json" },
             body: JSON.stringify({ kind: "office", event_type: "other", title: values.title, starts_at: start.toISOString(), ends_at: end.toISOString(), related_type: "task", related_id: tj.task?.id }),
-          });
+          }).catch((e) => console.error("calendar-events follow-up step 2 failed:", e));
         }
+        onClose();
+        router.push("/tasks/open");
+        return;
       }
       onClose();
     } catch (e) {
