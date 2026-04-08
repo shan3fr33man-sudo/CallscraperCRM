@@ -53,11 +53,45 @@ const TASK_FIELDS: Field[] = [
 
 const FOLLOWUP_FIELDS: Field[] = TASK_FIELDS.filter((f) => f.key !== "type");
 
+const TICKET_TYPES = ["damage", "service_complaint", "billing", "inquiry", "compliment", "other"].map((v) => ({ value: v, label: v }));
+const TICKET_PRIORITIES = ["low", "medium", "high", "critical"].map((v) => ({ value: v, label: v }));
+
+const ESTIMATE_FIELDS: Field[] = [
+  { key: "opportunity_id", label: "Opportunity", type: "remote_select", endpoint: "/api/opportunities", valueKey: "id", labelKey: "customer_name", required: true },
+  { key: "line_items", label: "Line Items", type: "line_items", required: true },
+  { key: "discount", label: "Discount ($)", type: "number" },
+  { key: "sales_tax_pct", label: "Sales Tax %", type: "number" },
+  { key: "notes", label: "Notes", type: "textarea" },
+  { key: "valid_until", label: "Valid until", type: "date" },
+];
+
+const CREW_CONFIRMATION_FIELDS: Field[] = [
+  { key: "job_id", label: "Job", type: "remote_select", endpoint: "/api/jobs", valueKey: "id", labelKey: "customer_name", required: true },
+  { key: "crew_member_id", label: "Crew member", type: "remote_select", endpoint: "/api/crews", valueKey: "id", labelKey: "name", required: true },
+  { key: "report_time", label: "Report time", type: "datetime", required: true },
+  { key: "pickup_location", label: "Pickup location", type: "text" },
+  { key: "special_instructions", label: "Special instructions", type: "textarea" },
+  { key: "send_sms", label: "Send SMS notification", type: "checkbox" },
+];
+
+const TICKET_FIELDS: Field[] = [
+  { key: "customer", label: "Customer", type: "customer_autocomplete", required: true },
+  { key: "job_id", label: "Job (optional)", type: "remote_select", endpoint: "/api/jobs", valueKey: "id", labelKey: "quote_number" },
+  { key: "ticket_name", label: "Ticket name", type: "text", required: true },
+  { key: "type", label: "Type", type: "select", options: TICKET_TYPES },
+  { key: "priority", label: "Priority", type: "select", options: TICKET_PRIORITIES },
+  { key: "description", label: "Description", type: "textarea" },
+  { key: "assigned_to", label: "Assigned to", type: "text" },
+];
+
 function configFor(kind: FormKind): { title: string; fields: Field[] } {
   if (kind === "opportunity") return { title: "New Opportunity", fields: OPP_FIELDS };
-  if (kind === "lead") return { title: "New Lead", fields: OPP_FIELDS };
+  if (kind === "lead") return { title: "New Lead", fields: [...OPP_FIELDS, { key: "run_triage", label: "Run Lead Triage after create", type: "checkbox" }] };
   if (kind === "task") return { title: "New Task", fields: TASK_FIELDS };
-  return { title: "New Follow-up", fields: FOLLOWUP_FIELDS };
+  if (kind === "follow_up") return { title: "New Follow-up", fields: FOLLOWUP_FIELDS };
+  if (kind === "estimate") return { title: "New Estimate", fields: ESTIMATE_FIELDS };
+  if (kind === "crew_confirmation") return { title: "Crew Confirmation", fields: CREW_CONFIRMATION_FIELDS };
+  return { title: "New Ticket", fields: TICKET_FIELDS };
 }
 
 export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose: () => void; prefill?: Record<string, string> }) {
@@ -74,7 +108,8 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
       try {
         const r = await fetch(f.endpoint);
         const j = await r.json();
-        const arr = (j.branches ?? j.users ?? []).map((row: Record<string, unknown>) => ({ value: String(row[f.valueKey]), label: String(row[f.labelKey] ?? row[f.valueKey]) }));
+        const rows = (j.branches ?? j.users ?? j.opportunities ?? j.jobs ?? j.crews ?? j.customers ?? []) as Record<string, unknown>[];
+        const arr = rows.map((row) => ({ value: String(row[f.valueKey]), label: String(row[f.labelKey] ?? row[f.valueKey]) }));
         setRemoteOpts((prev) => ({ ...prev, [f.key]: arr }));
       } catch {}
     });
@@ -160,6 +195,73 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
         onClose();
         router.push("/tasks/open");
         return;
+      } else if (kind === "estimate") {
+        const items = JSON.parse(values.line_items || "[]") as { name: string; rate: number; qty: number; subtotal: number }[];
+        const subtotal = items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
+        const discount = Number(values.discount || 0);
+        const afterDiscount = subtotal - discount;
+        const taxPct = Number(values.sales_tax_pct || 0);
+        const sales_tax = afterDiscount * (taxPct / 100);
+        const total = afterDiscount + sales_tax;
+        const r = await fetch("/api/estimates", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            opportunity_id: values.opportunity_id,
+            charges_json: items,
+            subtotal,
+            discounts: discount,
+            sales_tax,
+            estimated_total: total,
+            amount: total,
+            valid_until: values.valid_until || null,
+            notes: values.notes || null,
+          }),
+        });
+        if (!r.ok) throw new Error((await r.json()).error ?? "failed");
+        const ej = await r.json();
+        if (values.save_and_send === "true" && ej.estimate?.id) {
+          await fetch(`/api/estimates/${ej.estimate.id}/send`, { method: "POST" }).catch(() => null);
+        }
+        onClose();
+        return;
+      } else if (kind === "crew_confirmation") {
+        const taskBody = {
+          type: "crew_confirmation",
+          title: `Crew confirmation: job ${values.job_id}`,
+          due_at: values.report_time || null,
+          assigned_to: values.crew_member_id || null,
+          related_type: "job",
+          related_id: values.job_id,
+          body: values.special_instructions || null,
+        };
+        const tr = await fetch("/api/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(taskBody) });
+        if (!tr.ok) throw new Error((await tr.json()).error ?? "failed");
+        if (values.send_sms !== "false") {
+          await fetch("/api/messages/send", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ template_key: "crew_confirmation", related_type: "job", related_id: values.job_id }),
+          }).catch(() => null);
+        }
+        onClose();
+        return;
+      } else if (kind === "ticket") {
+        const r = await fetch("/api/tickets", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            customer_id: values.customer_id,
+            job_id: values.job_id || null,
+            ticket_name: values.ticket_name,
+            type: values.type,
+            priority: values.priority,
+            description: values.description,
+            assigned_to: values.assigned_to || null,
+            status: "active",
+          }),
+        });
+        if (!r.ok) throw new Error((await r.json()).error ?? "failed");
+        onClose();
+        router.push("/customer-service/tickets/active");
+        return;
       }
       onClose();
     } catch (e) {
@@ -190,6 +292,9 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
                 {f.type === "textarea" && <textarea rows={3} className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
                 {f.type === "phone" && <input type="tel" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
                 {f.type === "checkbox" && <input type="checkbox" checked={values[f.key] !== "false"} onChange={(e) => set(f.key, e.target.checked ? "true" : "false")} />}
+                {f.type === "line_items" && (
+                  <LineItemsEditor value={values[f.key] ?? "[]"} onChange={(v) => set(f.key, v)} />
+                )}
                 {f.type === "customer_autocomplete" && (
                   <CustomerAutocomplete
                     customerId={values.customer_id ?? ""}
@@ -215,6 +320,33 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
         </form>
       </div>
     </>
+  );
+}
+
+type LineItem = { name: string; rate: number; qty: number; subtotal: number };
+function LineItemsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  let parsed: LineItem[] = [];
+  try { parsed = JSON.parse(value) as LineItem[]; } catch { parsed = []; }
+  const items = parsed.length ? parsed : [];
+  function update(next: LineItem[]) { onChange(JSON.stringify(next)); }
+  function setCell(i: number, patch: Partial<LineItem>) {
+    const next = items.map((it, idx) => idx === i ? { ...it, ...patch, subtotal: Number((patch.rate ?? it.rate) || 0) * Number((patch.qty ?? it.qty) || 0) } : it);
+    update(next);
+  }
+  return (
+    <div className="space-y-1">
+      {items.map((it, i) => (
+        <div key={i} className="flex gap-1 items-center">
+          <input value={it.name} onChange={(e) => setCell(i, { name: e.target.value })} placeholder="Name" className="flex-1 border border-border rounded-md px-2 py-1 text-xs bg-background" />
+          <input type="number" value={it.rate} onChange={(e) => setCell(i, { rate: Number(e.target.value) })} placeholder="Rate" className="w-20 border border-border rounded-md px-2 py-1 text-xs bg-background" />
+          <input type="number" value={it.qty} onChange={(e) => setCell(i, { qty: Number(e.target.value) })} placeholder="Qty" className="w-16 border border-border rounded-md px-2 py-1 text-xs bg-background" />
+          <div className="w-16 text-xs text-right">${it.subtotal.toFixed(2)}</div>
+          <button type="button" onClick={() => update(items.filter((_, idx) => idx !== i))} className="text-red-600 px-1">×</button>
+        </div>
+      ))}
+      <button type="button" onClick={() => update([...items, { name: "", rate: 0, qty: 1, subtotal: 0 }])} className="text-xs px-2 py-1 rounded-md border border-border">+ Add Line</button>
+      <div className="text-xs text-right text-muted-foreground">Subtotal: ${items.reduce((s, it) => s + (it.subtotal || 0), 0).toFixed(2)}</div>
+    </div>
   );
 }
 
