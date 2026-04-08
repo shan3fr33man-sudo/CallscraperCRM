@@ -1,37 +1,35 @@
-# HANDOFF — Phase C complete
+# HANDOFF — Phase D complete
 
 ## State
-- `apps/web/src/components/TopBar.tsx` — fully replaced. Renders breadcrumb (from `nav.ts` lookup on `usePathname()`), centered `<GlobalSearch />`, then right side: `<NewMenu />`, `<NotificationsBell />`, "Ask Claude" button (existing AiSidebar), `<UserMenu />`. Existing `<TopBar title="X" />` callsites still work — title prop overrides the breadcrumb.
-- New components: `GlobalSearch.tsx`, `NewMenu.tsx`, `RecordForm.tsx`, `NotificationsBell.tsx`, `UserMenu.tsx`.
-- `RecordForm` is a slide-in sheet, JSON-field-config driven, supports 4 kinds: `opportunity`, `lead`, `task`, `follow_up`. New Follow-up writes BOTH a `tasks` row AND a `calendar_events` row (kind=office, type=other) linked via related_type=task.
-- `NewMenu` opens with keyboard shortcut `n`.
-- `NotificationsBell` polls `/api/notifications` every 60s; shows unread badge, "Overdue Follow-up" pill, "Follow-up Due Today" pill, mark-all-read.
-- New API routes:
-  - `GET /api/search/global?q=` — parallel ilike on customers/opportunities/jobs/tasks, max 5/type, 20 total
-  - `GET/PATCH /api/notifications` — list + counts + mark read
-  - `POST/GET /api/tasks` — emits `task.created`
-  - `POST/GET /api/calendar-events`
-  - `GET /api/branches`, `GET /api/users`
-- New pages: `/help`, `/login`, `/settings/integrations/import` (CSV upload stub)
-- `nav.ts` leaves added: Settings→Company→Billing, Settings→Company→Notifications, Settings→Integrations→API Keys, Settings→Integrations→Import (existing dynamic catch-all `[section]/[[...rest]]` serves the placeholder pages for billing/notifications/api-keys; import has a real page).
+- FullCalendar installed: `@fullcalendar/{react,daygrid,timegrid,interaction,core}` v6.1.20.
+- `apps/web/src/components/CalendarView.tsx` — dynamic-imported (`ssr: false`), renders week/day/month, drag-reschedule fires `PATCH /api/calendar-events/[id]`, eventClick opens `EventDetailDrawer`. Toast on success/revert.
+- `apps/web/src/components/EventDetailDrawer.tsx` — slide-in sheet. Shows title/type/when/location/related link. Buttons: Reschedule (inline date pickers), Edit (same), Cancel Event (DELETE with confirm).
+- `apps/web/src/app/api/calendar-events/route.ts` — GET extended with filters: `kind`, `branch_id`, `owner_id`, `event_type`, `start`, `end`. Returns FullCalendar shape `{id, title, start, end, allDay, color, extendedProps}`. Color seeded from event_type. POST emits `calendar_event.created`.
+- `apps/web/src/app/api/calendar-events/[id]/route.ts` — PATCH (emits `job.rescheduled` if kind=job, else `calendar_event.updated`) and DELETE.
+- Pages:
+  - `/calendars/office` — Users + Branch + Type chip filters, "+ New Office Event" modal posts to `/api/calendar-events`.
+  - `/calendars/job` — Branch + Job Type chips + Distance filter (job-type/distance are display-only until jobs table joins land in Phase E). No "+ New" — jobs created via estimate flow.
+  - `/calendars/rate-overrides` — table of `tariff_modifiers` where `kind in (holiday|peak_season|weekend|other)`, "+ Add Override" modal POSTs `/api/rate-overrides` (auto-creates a default tariff if none exists).
+- New API: `/api/rate-overrides` (GET/POST), `/api/tasks/scan-due` (GET/POST).
+- `vercel.json` cron added: `/api/tasks/scan-due` daily at `0 14 * * *` (14:00 UTC = 7:00 AM Pacific). Emits `task.due_soon` for tasks due in next 24h.
+- D9 verification: Phase B automation #3 (`estimate.accepted` → `create_calendar_event(kind=job)`) was already proven in the Phase B E2E test (1 calendar_event row). Cron-driven river writes the row when the automation is enabled.
 
 ## Gates
 - `npx tsc --noEmit` in apps/web → 0 errors
 - `node scripts/check-vocab.ts` → clean
-- `grep -rn 'href="#"' apps/web/src` → 0 results
-- Auth deferred: `/login` is a stub, `signOut()` redirects there
+- `grep href="#"` → 0 results
+- Commits: `8ee15ca` (D1) → `8c8d60e` (D2) → `167a5c2` (D3+D4) → `5a9e511` (D5+D6+D7) → pending (D8)
 
 ## Notes / deviations
-- Windows case-insensitive FS forced everything into `TopBar.tsx` (not a separate `Topbar.tsx`). The exported symbol is still `TopBar` for backwards compat.
-- Did not install shadcn — used raw Tailwind dropdowns/sheets to keep the dependency surface small. Phase D can install shadcn if FullCalendar styling needs it.
-- `RecordForm` opportunity form posts customer first, then opportunity. Branch select loads from `/api/branches` (uses `select *`).
+- FullCalendar wrapped in `next/dynamic({ssr:false})` to avoid SSR `window` errors.
+- D7 rate overrides reuses `tariff_modifiers` table (Phase A schema) — workspace-level "Default Tariff" is auto-created on first POST.
+- D8 cron also exposes a GET so it can be tested by hitting the URL directly.
+- Office event_types color-coded: on_site_estimate #3B82F6, virtual_survey #8B5CF6, phone_survey #F59E0B, box_delivery #10B981, liveswitch_survey #EC4899, other #6B7280, move (job) #EF4444.
 
-## Next session: Phase D — Calendar (Office + Job views)
-1. `pnpm add @fullcalendar/react @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction` in apps/web
-2. `apps/web/src/components/CalendarView.tsx` — reads `/api/calendar-events?kind={office|job}`, drag-to-reschedule fires PATCH (then `job.rescheduled` event)
-3. New static routes:
-   - `/calendars/office/page.tsx` (filters: Users, Type, Branch)
-   - `/calendars/job/page.tsx` (filters: Branch, Job Type, Distance)
-   - `/calendars/rate-overrides/page.tsx`
-4. Wire FullCalendar event click → side panel with full record + activity timeline
-5. Add 7am cron in `vercel.json` to emit `task.due_soon` events
+## Next session: Phase E — Per-section page backfill
+1. Build `EntityTable.tsx` component (Supabase query + columns config + filter chips + drawer)
+2. `/sales/new-leads` with opp columns (Status, Type, Service Date, Name, Branch, Address, Move Size, Source, Age)
+3. `/customers/[id]` detail page with 7 tabs (Sales / Estimate / Storage / Files / Accounting / Profitability / Claims) and Activity sub-tabs (Note/Email/Call/Text)
+4. `/dispatch/command-center` (flagship — Gantt by crew × time, drag-to-reassign)
+5. `/sales/command-center` (flagship — live call feed, conversion funnel, leaderboard)
+6. `/customer-service/tickets/{active,completed}`, `/dispatch/scheduling`, `/tasks/*` filtered views

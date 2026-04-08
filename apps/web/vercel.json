@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/sync/callscraper", "schedule": "*/15 * * * *" },
     { "path": "/api/agents/run-batch?limit=10&days=1", "schedule": "*/20 * * * *" },
-    { "path": "/api/automations/run", "schedule": "*/5 * * * *" }
+    { "path": "/api/automations/run", "schedule": "*/5 * * * *" },
+    { "path": "/api/tasks/scan-due", "schedule": "0 14 * * *" }
   ]
 }

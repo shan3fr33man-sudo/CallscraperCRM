@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "C",
-  "last_completed_task": "Topbar with global search + NewMenu + NotificationsBell + UserMenu + 4 RecordForms + 4 settings leaves",
-  "current_phase": "D",
-  "current_task": "Calendar (Office + Job views) with @fullcalendar/react",
+  "last_completed_phase": "D",
+  "last_completed_task": "Calendar (office + job + rate-overrides) with FullCalendar, drag-reschedule, EventDetailDrawer, 7am task.due_soon cron",
+  "current_phase": "E",
+  "current_task": "Per-section page backfill — sales/new-leads, customers/[id] detail, dispatch command center",
   "blockers": [],
   "next_3_tasks": [
-    "Install @fullcalendar/react + plugins (daygrid, timegrid, interaction)",
-    "Build CalendarView component reading /api/calendar-events?kind=office|job",
-    "Add /calendars/office, /calendars/job, /calendars/rate-overrides static routes"
+    "Build EntityTable component for list views",
+    "/sales/new-leads with new-leads opportunity columns",
+    "/customers/[id] detail page with 7 opportunity-detail tabs"
   ],
   "test_status": "tsc clean; vocab clean; href# zero",
   "build_status": "tsc_clean",
-  "last_commit": "pending phase-C"
+  "last_commit": "pending phase-D8"
 }
