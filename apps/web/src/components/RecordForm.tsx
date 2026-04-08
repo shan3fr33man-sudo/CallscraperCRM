@@ -12,9 +12,12 @@ import { useRouter } from "next/navigation";
 export type FormKind = "opportunity" | "lead" | "task" | "follow_up" | "estimate" | "crew_confirmation" | "ticket";
 
 type Field =
-  | { key: string; label: string; type: "text" | "number" | "date" | "datetime"; required?: boolean }
+  | { key: string; label: string; type: "text" | "number" | "date" | "datetime" | "textarea" | "phone"; required?: boolean; min?: number; max?: number; minLength?: number }
+  | { key: string; label: string; type: "checkbox"; required?: boolean }
   | { key: string; label: string; type: "select"; options: { value: string; label: string }[]; required?: boolean }
-  | { key: string; label: string; type: "remote_select"; endpoint: string; valueKey: string; labelKey: string; required?: boolean };
+  | { key: string; label: string; type: "remote_select"; endpoint: string; valueKey: string; labelKey: string; required?: boolean }
+  | { key: string; label: string; type: "customer_autocomplete"; required?: boolean }
+  | { key: string; label: string; type: "line_items"; required?: boolean };
 
 const SERVICE_TYPES = [
   { value: "local", label: "Local" }, { value: "long_distance", label: "Long Distance" }, { value: "interstate", label: "Interstate" }, { value: "labor_only", label: "Labor Only" }, { value: "storage", label: "Storage" },
@@ -27,8 +30,7 @@ const PRIORITIES = [{ value: "1", label: "low" }, { value: "2", label: "medium" 
 const RELATED_TYPES = [{ value: "opportunity", label: "Opportunity" }, { value: "job", label: "Job" }, { value: "customer", label: "Customer" }];
 
 const OPP_FIELDS: Field[] = [
-  { key: "customer_name", label: "Customer name", type: "text", required: true },
-  { key: "customer_phone", label: "Customer phone", type: "text" },
+  { key: "customer", label: "Customer", type: "customer_autocomplete", required: true },
   { key: "service_type", label: "Service type", type: "select", options: SERVICE_TYPES },
   { key: "service_date", label: "Service date", type: "date" },
   { key: "move_size", label: "Move size", type: "select", options: MOVE_SIZES },
@@ -185,6 +187,17 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
                 {f.type === "number" && <input type="number" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
                 {f.type === "date" && <input type="date" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
                 {f.type === "datetime" && <input type="datetime-local" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
+                {f.type === "textarea" && <textarea rows={3} className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
+                {f.type === "phone" && <input type="tel" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)} />}
+                {f.type === "checkbox" && <input type="checkbox" checked={values[f.key] !== "false"} onChange={(e) => set(f.key, e.target.checked ? "true" : "false")} />}
+                {f.type === "customer_autocomplete" && (
+                  <CustomerAutocomplete
+                    customerId={values.customer_id ?? ""}
+                    customerName={values.customer_name ?? ""}
+                    onPick={(id, name, phone) => { set("customer_id", id); set("customer_name", name); if (phone) set("customer_phone", phone); }}
+                    onClear={() => { set("customer_id", ""); set("customer_name", ""); set("customer_phone", ""); }}
+                  />
+                )}
                 {(f.type === "select" || f.type === "remote_select") && (
                   <select className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" value={values[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)}>
                     <option value="">—</option>
@@ -202,5 +215,76 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
         </form>
       </div>
     </>
+  );
+}
+
+type CustomerHit = { id: string; customer_name: string | null; customer_phone: string | null };
+function CustomerAutocomplete({ customerId, customerName, onPick, onClear }: { customerId: string; customerName: string; onPick: (id: string, name: string, phone?: string) => void; onClear: () => void }) {
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<CustomerHit[]>([]);
+  const [open, setOpen] = useState(false);
+  const [miniOpen, setMiniOpen] = useState(false);
+  const [miniName, setMiniName] = useState("");
+  const [miniPhone, setMiniPhone] = useState("");
+
+  useEffect(() => {
+    if (!q.trim()) { setHits([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/customers?q=${encodeURIComponent(q)}`);
+        const j = await r.json();
+        setHits(j.customers ?? []);
+      } catch { setHits([]); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  async function createInline() {
+    if (!miniName.trim()) return;
+    const r = await fetch("/api/customers", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customer_name: miniName, customer_phone: miniPhone || null }) });
+    const j = await r.json();
+    if (j.customer?.id) {
+      onPick(j.customer.id, j.customer.customer_name ?? miniName, j.customer.customer_phone ?? miniPhone);
+      setMiniOpen(false); setMiniName(""); setMiniPhone(""); setQ(""); setOpen(false);
+    }
+  }
+
+  if (customerId) {
+    return (
+      <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs border border-green-300">
+        <span>{customerName || "selected"}</span>
+        <button type="button" onClick={onClear} className="text-green-900 font-bold">×</button>
+      </div>
+    );
+  }
+  return (
+    <div className="relative">
+      <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Search by name or phone…" className="w-full border border-border rounded-md px-2 py-1.5 text-sm bg-background" />
+      {open && (q.trim() || hits.length > 0) && (
+        <div className="absolute z-10 left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {hits.map((h) => (
+            <button type="button" key={h.id} onClick={() => { onPick(h.id, h.customer_name ?? "", h.customer_phone ?? undefined); setQ(""); setOpen(false); }} className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent/10">
+              <div className="font-medium">{h.customer_name ?? "—"}</div>
+              <div className="text-muted-foreground">{h.customer_phone ?? ""}</div>
+            </button>
+          ))}
+          {q.trim() && !miniOpen && (
+            <button type="button" onClick={() => { setMiniOpen(true); setMiniName(q); }} className="w-full text-left px-2 py-1.5 text-xs border-t border-border hover:bg-accent/10 text-accent">
+              + Create new: {q}
+            </button>
+          )}
+          {miniOpen && (
+            <div className="p-2 border-t border-border space-y-1">
+              <input value={miniName} onChange={(e) => setMiniName(e.target.value)} placeholder="Name" className="w-full border border-border rounded-md px-2 py-1 text-xs bg-background" />
+              <input value={miniPhone} onChange={(e) => setMiniPhone(e.target.value)} placeholder="Phone" className="w-full border border-border rounded-md px-2 py-1 text-xs bg-background" />
+              <div className="flex gap-1">
+                <button type="button" onClick={createInline} className="text-xs px-2 py-1 rounded-md bg-accent text-white">Create</button>
+                <button type="button" onClick={() => setMiniOpen(false)} className="text-xs px-2 py-1 rounded-md border border-border">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

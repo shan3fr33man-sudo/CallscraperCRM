@@ -38,14 +38,15 @@ export async function POST(req: Request) {
   return NextResponse.json({ customer: data });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const sb = crmClient();
-  const { data, error } = await sb
-    .from("customers")
-    .select("*")
-    .eq("org_id", DEFAULT_ORG_ID)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q");
+  let query = sb.from("customers").select("*").eq("org_id", DEFAULT_ORG_ID);
+  if (q && q.trim()) {
+    query = query.or(`customer_name.ilike.%${q}%,customer_phone.ilike.%${q}%`);
+  }
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(q ? 10 : 50);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ customers: data });
 }
