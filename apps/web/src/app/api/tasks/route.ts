@@ -19,7 +19,11 @@ export async function POST(req: Request) {
       status: body.status ?? "not_started",
       assigned_to: body.assigned_to ?? null,
       type: body.type ?? "follow_up",
-      priority: body.priority ?? 3,
+      priority: typeof body.priority === "number"
+        ? body.priority
+        : (typeof body.priority === "string" && !isNaN(Number(body.priority))
+            ? Number(body.priority)
+            : 3),
       related_type: body.related_type ?? null,
       related_id: body.related_id ?? null,
     })
