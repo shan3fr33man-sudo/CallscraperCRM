@@ -295,18 +295,33 @@ async function runTool(name: string, input: Record<string, unknown>, orgId: stri
   return { error: `unknown tool ${name}` };
 }
 
+async function getAnthropicKey(orgId: string): Promise<string | null> {
+  try {
+    const sb = crmClient();
+    const { data } = await sb
+      .from("integration_credentials")
+      .select("secrets, enabled")
+      .eq("org_id", orgId)
+      .eq("provider_key", "anthropic")
+      .eq("enabled", true)
+      .maybeSingle();
+    const k = (data?.secrets as { key?: string } | null)?.key;
+    if (k) return k;
+  } catch {}
+  return process.env.ANTHROPIC_API_KEY ?? null;
+}
+
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const body = (await req.json()) as { messages: { role: "user" | "assistant"; content: string }[]; context?: Ctx };
+  const { messages, context } = body;
+  const orgId = await getOrgId();
+  const apiKey = await getAnthropicKey(orgId);
   if (!apiKey) {
     return NextResponse.json(
       { error: "Add your Anthropic API key in Settings → Integrations → API Keys" },
       { status: 402 },
     );
   }
-
-  const body = (await req.json()) as { messages: { role: "user" | "assistant"; content: string }[]; context?: Ctx };
-  const { messages, context } = body;
-  const orgId = await getOrgId();
   const client = new Anthropic({ apiKey });
 
   const convo: Anthropic.MessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
