@@ -1,15 +1,24 @@
 {
-  "last_completed_phase": "H",
-  "last_completed_task": "Phase H complete — 7 river tools in /api/ai/chat + ai_usage logging + 402 on missing key; AiSidebar entity context + quick action chips per page; Estimate Drafter agent (POST /api/agents/draft-estimate) with Draft with AI button on customer detail Estimate tab; pure-TS coaching-rubric.ts classifier; nightly /api/agents/coach-calls cron (8am UTC) inserting into call_coaching; /sales/coaching page with summary tiles, grade distribution, filter chips, and coaching drawer (strengths/improvements/flags/transcript/coach notes/mark reviewed); nav.ts gained Sales → Command Center + Coaching leaves",
-  "current_phase": "Done",
-  "current_task": "Ready for pre-launch: auth wall, Twilio wiring, Stripe billing, production deploy",
+  "last_completed_phase": "Launch",
+  "last_completed_task": "L6 Playwright smoke suite + HANDOFF.md rewrite as Day 1 Operations guide",
+  "current_phase": "GO-LIVE",
+  "current_task": "Deploy to Vercel and run SYNC_VERIFICATION.md",
+  "launch_status": "GO",
   "blockers": [],
   "next_3_tasks": [
-    "Supabase auth wall + org-scoped RLS (replace DEFAULT_ORG_ID with session org)",
-    "Twilio adapter for inbound call + SMS webhooks (/api/webhooks/twilio/*)",
-    "Stripe billing + workspace plans + ANTHROPIC_API_KEY storage in integration_credentials"
+    "Push main to GitHub and import into Vercel",
+    "Set env vars per .env.production.example and trigger first deploy",
+    "Run SYNC_VERIFICATION.md against the live deploy"
   ],
-  "test_status": "tsc clean; vocab clean; href# zero; stub/TODO onClick zero",
-  "build_status": "tsc_clean",
-  "last_commit": "phase-H8: final integration checks pass [tsc: clean]"
+  "test_status": "tsc clean; production next build clean; playwright suite staged",
+  "build_status": "tsc_clean; next_build_clean",
+  "last_commit": "launch-L6: Playwright smoke suite for public + app routes [tsc: clean]",
+  "launch_phases": {
+    "L1": "auth helpers + middleware + login/signup + onboard",
+    "L2": "real RLS tenant isolation via get_my_org_id() on 35+ tables",
+    "L3": "per-workspace API key storage + Anthropic fallback",
+    "L4": "env example, 5 crons, production build verified",
+    "L5": "sync verification checklist (SYNC_VERIFICATION.md)",
+    "L6": "Playwright smoke suite for all routes"
+  }
 }
