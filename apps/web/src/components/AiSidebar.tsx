@@ -4,7 +4,14 @@ import { X, Send } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
-export function AiSidebar({ onClose }: { onClose: () => void }) {
+export interface AiContext {
+  page?: string;
+  record_type?: string;
+  record_id?: string;
+  record_name?: string;
+}
+
+export function AiSidebar({ onClose, context }: { onClose: () => void; context?: AiContext }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +26,7 @@ export function AiSidebar({ onClose }: { onClose: () => void }) {
       const r = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, context }),
       });
       const j = (await r.json()) as { reply?: string; error?: string };
       setMessages([...next, { role: "assistant", content: j.reply ?? j.error ?? "(no reply)" }]);

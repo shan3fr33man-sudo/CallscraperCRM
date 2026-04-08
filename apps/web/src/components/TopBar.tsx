@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";
-import { AiSidebar } from "./AiSidebar";
+import { AiSidebar, type AiContext } from "./AiSidebar";
 import { GlobalSearch } from "./GlobalSearch";
 import { NewMenu } from "./NewMenu";
 import { NotificationsBell } from "./NotificationsBell";
@@ -19,10 +19,18 @@ function breadcrumb(pathname: string): string {
   return [section.label, sub?.label].filter(Boolean).join(" / ");
 }
 
-export function TopBar({ title }: { title?: string }) {
+function pageKey(pathname: string): string {
+  const parts = (pathname || "/").split("/").filter(Boolean);
+  if (parts.length === 0) return "home";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]}.${parts[1]}`;
+}
+
+export function TopBar({ title, aiContext }: { title?: string; aiContext?: AiContext }) {
   const pathname = usePathname();
   const [aiOpen, setAiOpen] = useState(false);
   const crumb = title ?? breadcrumb(pathname ?? "/");
+  const ctx: AiContext = { page: pageKey(pathname ?? "/"), ...aiContext };
 
   return (
     <div className="h-12 border-b border-border px-4 flex items-center gap-3">
@@ -36,7 +44,7 @@ export function TopBar({ title }: { title?: string }) {
         </button>
         <UserMenu />
       </div>
-      {aiOpen && <AiSidebar onClose={() => setAiOpen(false)} />}
+      {aiOpen && <AiSidebar onClose={() => setAiOpen(false)} context={ctx} />}
     </div>
   );
 }

@@ -56,7 +56,15 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <TopBar title={String(customer?.customer_name ?? "Customer")} />
+      <TopBar
+        title={String(customer?.customer_name ?? "Customer")}
+        aiContext={{
+          page: "customers.detail",
+          record_type: "customer",
+          record_id: String(customer?.id ?? ""),
+          record_name: String(customer?.customer_name ?? ""),
+        }}
+      />
       <div className="p-5 grid grid-cols-3 gap-5">
         {/* LEFT PANEL */}
         <div className="col-span-1 border border-border rounded-lg p-4 bg-background h-fit">
