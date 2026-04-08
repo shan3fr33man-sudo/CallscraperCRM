@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -8,11 +9,12 @@ export async function GET(req: Request) {
   const days = Number(url.searchParams.get("days") ?? 7);
   const since = new Date(Date.now() - days * 86400000).toISOString();
   const sb = crmClient();
+  const orgId = await getOrgId();
 
   const coaching = await sb
     .from("call_coaching")
     .select("id, call_id, score, rubric_json, coach_notes, reviewed_at, created_at")
-    .eq("org_id", DEFAULT_ORG_ID)
+    .eq("org_id", orgId)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(500);

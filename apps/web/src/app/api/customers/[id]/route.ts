@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = crmClient();
-  const { data, error } = await sb.from("customers").select("*").eq("id", id).eq("org_id", DEFAULT_ORG_ID).maybeSingle();
+  const orgId = await getOrgId();
+  const { data, error } = await sb.from("customers").select("*").eq("id", id).eq("org_id", orgId).maybeSingle();
   if (error || !data) return NextResponse.json({ error: error?.message ?? "not found" }, { status: 404 });
   return NextResponse.json({ customer: data });
 }

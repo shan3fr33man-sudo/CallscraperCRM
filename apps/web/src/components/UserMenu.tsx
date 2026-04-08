@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { createBrowserSupabase } from "@/lib/supabase/client";
 
 const ITEMS = [
   { label: "My Account", href: "/settings/company/details" },
@@ -14,9 +15,12 @@ export function UserMenu({ displayName = "Shane", email = "shane@callscraper.com
   const [open, setOpen] = useState(false);
   const initials = displayName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
 
-  function signOut() {
-    // Auth not yet wired in dev mode (single-org with DEFAULT_ORG_ID).
-    // When Supabase auth lands in v1.1, call supabase.auth.signOut() here.
+  async function signOut() {
+    try {
+      await createBrowserSupabase().auth.signOut();
+    } catch (e) {
+      console.error("signOut failed", e);
+    }
     window.location.href = "/login";
   }
 

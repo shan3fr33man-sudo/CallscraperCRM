@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const runtime = "nodejs";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("estimates")
     .update({ sent_at: new Date().toISOString() })
@@ -19,7 +21,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     ?.opportunities?.customers ?? {};
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "estimate.sent",
     related_type: "estimate",
     related_id: id,

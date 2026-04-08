@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -7,10 +8,11 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("opportunities")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       customer_id: body.customer_id ?? null,
       status: body.status ?? "new",
       service_type: body.service_type ?? null,
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "opportunity.created",
     related_type: "opportunity",
     related_id: data.id,
@@ -50,9 +52,10 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const customerId = searchParams.get("customer_id");
-  let q = sb.from("opportunities").select("*").eq("org_id", DEFAULT_ORG_ID);
+  let q = sb.from("opportunities").select("*").eq("org_id", orgId);
   if (customerId) q = q.eq("customer_id", customerId);
   const { data, error } = await q.order("created_at", { ascending: false }).limit(100);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

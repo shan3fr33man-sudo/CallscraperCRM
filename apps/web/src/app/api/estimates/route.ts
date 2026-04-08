@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -7,10 +8,11 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("estimates")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       opportunity_id: body.opportunity_id,
       charges_json: body.charges_json ?? [],
       subtotal: body.subtotal ?? 0,
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "estimate.created",
     related_type: "estimate",
     related_id: data.id,

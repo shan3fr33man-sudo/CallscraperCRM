@@ -1,29 +1,46 @@
 "use client";
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
-function LoginForm() {
+export default function SignupPage() {
+  const [workspaceName, setWorkspaceName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const params = useSearchParams();
-  const next = params.get("next") ?? "/";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
     setLoading(true);
     setError("");
+
     const sb = createBrowserSupabase();
-    const { error: err } = await sb.auth.signInWithPassword({ email, password });
-    if (err) {
-      setError(err.message);
+    const { data, error: signupError } = await sb.auth.signUp({ email, password });
+    if (signupError || !data.user) {
+      setError(signupError?.message ?? "Signup failed");
       setLoading(false);
       return;
     }
-    router.push(next);
+
+    const res = await fetch("/api/auth/onboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_name: workspaceName, user_id: data.user.id }),
+    });
+    if (!res.ok) {
+      const body = await res.json();
+      setError(body.error ?? "Workspace creation failed");
+      setLoading(false);
+      return;
+    }
+
+    router.push("/");
     router.refresh();
   }
 
@@ -32,11 +49,22 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">CallscraperCRM</h1>
-          <p className="text-gray-400 mt-2">Moving company intelligence platform</p>
+          <p className="text-gray-400 mt-2">Set up your workspace</p>
         </div>
         <div className="bg-gray-900 rounded-xl border border-gray-800 p-8">
-          <h2 className="text-xl font-semibold text-white mb-6">Sign in</h2>
+          <h2 className="text-xl font-semibold text-white mb-6">Create workspace</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Workspace name</label>
+              <input
+                type="text"
+                value={workspaceName}
+                onChange={(e) => setWorkspaceName(e.target.value)}
+                required
+                placeholder="A Perfect Mover"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Email</label>
               <input
@@ -55,7 +83,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="••••••••"
+                placeholder="Min 8 characters"
                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
@@ -67,25 +95,17 @@ function LoginForm() {
               disabled={loading}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
             >
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? "Creating workspace…" : "Create workspace"}
             </button>
           </form>
           <p className="text-gray-400 text-sm mt-6 text-center">
-            No workspace?{" "}
-            <a href="/signup" className="text-blue-400 hover:underline">
-              Create one
+            Already have a workspace?{" "}
+            <a href="/login" className="text-blue-400 hover:underline">
+              Sign in
             </a>
           </p>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950" />}>
-      <LoginForm />
-    </Suspense>
   );
 }

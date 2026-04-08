@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -7,10 +8,11 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("sms_logs")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       template_key: body.template_key ?? null,
       to_number: body.to_number ?? null,
       from_number: body.from_number ?? null,
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "message.queued",
     related_type: String(body.related_type ?? "message"),
     related_id: String(body.related_id ?? data.id),

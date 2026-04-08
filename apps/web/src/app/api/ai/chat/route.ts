@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { callscraperClient } from "@/lib/callscraper";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { logAiUsage } from "@/lib/ai-usage";
 
@@ -122,7 +123,7 @@ function priorityToInt(p?: string): number {
   return 2;
 }
 
-async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+async function runTool(name: string, input: Record<string, unknown>, orgId: string): Promise<unknown> {
   // Upstream tools
   if (name === "search_calls" || name === "search_transcripts" || name === "search_leads") {
     const sb = callscraperClient();
@@ -156,7 +157,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const { data, error } = await sb
       .from("customers")
       .select("id, customer_name, customer_phone, status, source, brand, created_at")
-      .eq("org_id", DEFAULT_ORG_ID)
+      .eq("org_id", orgId)
       .or(`customer_name.ilike.${ilike},customer_phone.ilike.${ilike}`)
       .limit(10);
     return error ? { error: error.message } : { rows: data };
@@ -167,7 +168,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const { data, error } = await sb
       .from("activities")
       .select("kind, payload, created_at")
-      .eq("org_id", DEFAULT_ORG_ID)
+      .eq("org_id", orgId)
       .eq("record_id", customer_id)
       .order("created_at", { ascending: false })
       .limit(20);
@@ -177,7 +178,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const customer_id = String(input.customer_id ?? "");
     if (!customer_id) return { error: "customer_id required" };
     const row = {
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       customer_id,
       status: "new",
       service_type: (input.service_type as string) ?? null,
@@ -189,7 +190,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const ins = await sb.from("opportunities").insert(row).select("id, quote_number").single();
     if (ins.error) return { error: ins.error.message };
     await emitEvent(sb, {
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       type: "opportunity.created",
       related_type: "opportunity",
       related_id: ins.data.id,
@@ -199,7 +200,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
   }
   if (name === "create_task") {
     const row = {
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       title: String(input.title ?? "(untitled)"),
       body: null,
       due_at: String(input.due_at ?? new Date().toISOString()),
@@ -213,7 +214,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const ins = await sb.from("tasks").insert(row).select("id, title, due_at").single();
     if (ins.error) return { error: ins.error.message };
     await emitEvent(sb, {
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       type: "task.created",
       related_type: "task",
       related_id: ins.data.id,
@@ -226,7 +227,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const { data, error } = await sb
       .from("tasks")
       .select("id, title, due_at, assigned_to, priority, related_type")
-      .eq("org_id", DEFAULT_ORG_ID)
+      .eq("org_id", orgId)
       .lt("due_at", new Date().toISOString())
       .neq("status", "completed")
       .order("due_at", { ascending: true })
@@ -242,7 +243,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     if (cust.error || !cust.data) return { error: cust.error?.message ?? "customer not found" };
     if (channel === "sms") {
       const ins = await sb.from("sms_logs").insert({
-        org_id: DEFAULT_ORG_ID,
+        org_id: orgId,
         customer_id,
         to_number: cust.data.customer_phone,
         message: `[${template_key}]`,
@@ -250,10 +251,10 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
         template_key,
       }).select("id").single();
       if (ins.error) return { error: ins.error.message };
-      await emitEvent(sb, { org_id: DEFAULT_ORG_ID, type: "message.queued", related_type: "sms_log", related_id: ins.data.id, payload: { channel: "sms", template_key, customer_id } });
+      await emitEvent(sb, { org_id: orgId, type: "message.queued", related_type: "sms_log", related_id: ins.data.id, payload: { channel: "sms", template_key, customer_id } });
     } else if (channel === "email") {
       const ins = await sb.from("email_logs").insert({
-        org_id: DEFAULT_ORG_ID,
+        org_id: orgId,
         customer_id,
         to_email: cust.data.customer_email,
         subject: `[${template_key}]`,
@@ -262,7 +263,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
         template_key,
       }).select("id").single();
       if (ins.error) return { error: ins.error.message };
-      await emitEvent(sb, { org_id: DEFAULT_ORG_ID, type: "message.queued", related_type: "email_log", related_id: ins.data.id, payload: { channel: "email", template_key, customer_id } });
+      await emitEvent(sb, { org_id: orgId, type: "message.queued", related_type: "email_log", related_id: ins.data.id, payload: { channel: "email", template_key, customer_id } });
     } else {
       return { error: "channel must be sms or email" };
     }
@@ -274,7 +275,7 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<un
     const { data, error } = await sb
       .from("opportunities")
       .select("status, amount")
-      .eq("org_id", DEFAULT_ORG_ID)
+      .eq("org_id", orgId)
       .gte("created_at", since);
     if (error) return { error: error.message };
     const byStatus = new Map<string, { count: number; total_amount: number }>();
@@ -305,6 +306,7 @@ export async function POST(req: Request) {
 
   const body = (await req.json()) as { messages: { role: "user" | "assistant"; content: string }[]; context?: Ctx };
   const { messages, context } = body;
+  const orgId = await getOrgId();
   const client = new Anthropic({ apiKey });
 
   const convo: Anthropic.MessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
@@ -335,7 +337,7 @@ export async function POST(req: Request) {
     convo.push({ role: "assistant", content: res.content });
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const t of toolUses) {
-      const out = await runTool(t.name, (t.input as Record<string, unknown>) ?? {});
+      const out = await runTool(t.name, (t.input as Record<string, unknown>) ?? {}, orgId);
       results.push({ type: "tool_result", tool_use_id: t.id, content: JSON.stringify(out) });
     }
     convo.push({ role: "user", content: results });

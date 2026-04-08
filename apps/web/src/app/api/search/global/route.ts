@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -11,14 +12,15 @@ export async function GET(req: Request) {
   if (!q) return NextResponse.json({ results: [] });
 
   const sb = crmClient();
+  const orgId = await getOrgId();
   const like = `%${q}%`;
   const results: Result[] = [];
 
   const [customers, opportunities, jobs, tasks] = await Promise.all([
-    sb.from("customers").select("id,customer_name,customer_phone").eq("org_id", DEFAULT_ORG_ID).or(`customer_name.ilike.${like},customer_phone.ilike.${like}`).limit(5),
-    sb.from("opportunities").select("id,quote_number,customer_name,status").eq("org_id", DEFAULT_ORG_ID).or(`customer_name.ilike.${like},quote_number.ilike.${like}`).limit(5),
-    sb.from("jobs").select("id,quote_number,customer_name,status").eq("org_id", DEFAULT_ORG_ID).or(`customer_name.ilike.${like},quote_number.ilike.${like}`).limit(5),
-    sb.from("tasks").select("id,title,due_at").eq("org_id", DEFAULT_ORG_ID).ilike("title", like).limit(5),
+    sb.from("customers").select("id,customer_name,customer_phone").eq("org_id", orgId).or(`customer_name.ilike.${like},customer_phone.ilike.${like}`).limit(5),
+    sb.from("opportunities").select("id,quote_number,customer_name,status").eq("org_id", orgId).or(`customer_name.ilike.${like},quote_number.ilike.${like}`).limit(5),
+    sb.from("jobs").select("id,quote_number,customer_name,status").eq("org_id", orgId).or(`customer_name.ilike.${like},quote_number.ilike.${like}`).limit(5),
+    sb.from("tasks").select("id,title,due_at").eq("org_id", orgId).ilike("title", like).limit(5),
   ]);
 
   for (const c of customers.data ?? []) {

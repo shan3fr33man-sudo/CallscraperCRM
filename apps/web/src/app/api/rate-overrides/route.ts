@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -22,13 +23,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = (await req.json()) as { kind: string; label?: string; formula_json?: Record<string, unknown> };
   const sb = crmClient();
+  const orgId = await getOrgId();
 
   // Find or create the workspace default tariff so the FK is satisfied.
   let tariffId: string | null = null;
-  const { data: existing } = await sb.from("tariffs").select("id").eq("org_id", DEFAULT_ORG_ID).eq("is_default", true).maybeSingle();
+  const { data: existing } = await sb.from("tariffs").select("id").eq("org_id", orgId).eq("is_default", true).maybeSingle();
   if (existing) tariffId = existing.id;
   else {
-    const { data: created, error: tErr } = await sb.from("tariffs").insert({ org_id: DEFAULT_ORG_ID, name: "Default Tariff", is_default: true }).select("id").single();
+    const { data: created, error: tErr } = await sb.from("tariffs").insert({ org_id: orgId, name: "Default Tariff", is_default: true }).select("id").single();
     if (tErr) return NextResponse.json({ error: tErr.message }, { status: 500 });
     tariffId = created!.id;
   }

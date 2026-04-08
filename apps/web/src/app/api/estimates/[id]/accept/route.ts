@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const runtime = "nodejs";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = crmClient();
+  const orgId = await getOrgId();
 
   const { data: est, error: eErr } = await sb
     .from("estimates")
@@ -23,7 +25,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { data: job, error: jErr } = await sb
     .from("jobs")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       opportunity_id: (opp as { id?: string }).id ?? est.opportunity_id,
       customer_id: (opp as { customer_id?: string }).customer_id ?? null,
       quote_number: null,
@@ -43,7 +45,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   }
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "estimate.accepted",
     related_type: "estimate",
     related_id: id,
@@ -61,7 +63,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   });
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "job.booked",
     related_type: "job",
     related_id: job.id,

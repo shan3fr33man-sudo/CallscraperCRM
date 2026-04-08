@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -7,8 +8,9 @@ export async function POST(req: Request) {
   const { call_id, text } = (await req.json()) as { call_id: string; text: string };
   if (!call_id || !text) return NextResponse.json({ error: "call_id + text required" }, { status: 400 });
   const crm = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await crm.rpc("add_activity_by_external_id", {
-    p_org_id: DEFAULT_ORG_ID,
+    p_org_id: orgId,
     p_object_key: "call",
     p_external_id: call_id,
     p_kind: "note",
@@ -23,18 +25,19 @@ export async function GET(req: Request) {
   const callId = url.searchParams.get("call_id");
   if (!callId) return NextResponse.json({ error: "call_id required" }, { status: 400 });
   const crm = crmClient();
+  const orgId = await getOrgId();
   // Find the record for this external id, then list activities.
   const { data: obj } = await crm
     .from("objects")
     .select("id")
-    .eq("org_id", DEFAULT_ORG_ID)
+    .eq("org_id", orgId)
     .eq("key", "call")
     .single();
   if (!obj) return NextResponse.json({ activities: [] });
   const { data: rec } = await crm
     .from("records")
     .select("id")
-    .eq("org_id", DEFAULT_ORG_ID)
+    .eq("org_id", orgId)
     .eq("object_id", obj.id)
     .eq("data->>external_id", callId)
     .maybeSingle();

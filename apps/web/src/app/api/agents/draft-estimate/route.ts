@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { logAiUsage } from "@/lib/ai-usage";
 
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
   if (!opportunity_id) return NextResponse.json({ error: "opportunity_id required" }, { status: 400 });
 
   const sb = crmClient();
+  const orgId = await getOrgId();
   const opp = await sb
     .from("opportunities")
     .select("id, customer_id, service_type, move_type, move_size, service_date, origin_json, destination_json, amount")
@@ -71,7 +73,7 @@ export async function POST(req: Request) {
     const acts = await sb
       .from("activities")
       .select("payload, created_at")
-      .eq("org_id", DEFAULT_ORG_ID)
+      .eq("org_id", orgId)
       .eq("record_id", opp.data.customer_id)
       .eq("kind", "call")
       .order("created_at", { ascending: false })
@@ -126,7 +128,7 @@ export async function POST(req: Request) {
   const ins = await sb
     .from("estimates")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       opportunity_id,
       charges_json: lineItems,
       subtotal,
@@ -140,7 +142,7 @@ export async function POST(req: Request) {
   if (ins.error) return NextResponse.json({ error: ins.error.message }, { status: 500 });
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "estimate.created",
     related_type: "estimate",
     related_id: ins.data.id,

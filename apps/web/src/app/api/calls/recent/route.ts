@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { callscraperClient } from "@/lib/callscraper";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -24,10 +25,11 @@ type CallRow = {
 
 async function fromCrm(): Promise<CallRow[]> {
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("activities")
     .select("id, record_id, payload, created_at")
-    .eq("org_id", DEFAULT_ORG_ID)
+    .eq("org_id", orgId)
     .eq("kind", "call")
     .order("created_at", { ascending: false })
     .limit(20);

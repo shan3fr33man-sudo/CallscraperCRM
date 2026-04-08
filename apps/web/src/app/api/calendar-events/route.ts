@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -33,10 +34,11 @@ type Row = {
 export async function POST(req: Request) {
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
+  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("calendar_events")
     .insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       kind: body.kind ?? "office",
       event_type: body.event_type ?? "other",
       title: body.title,
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: "calendar_event.created",
     related_type: "calendar_event",
     related_id: data.id,
@@ -74,7 +76,8 @@ export async function GET(req: Request) {
   const end = url.searchParams.get("end");
 
   const sb = crmClient();
-  let q = sb.from("calendar_events").select("*").eq("org_id", DEFAULT_ORG_ID).order("starts_at", { ascending: true }).limit(500);
+  const orgId = await getOrgId();
+  let q = sb.from("calendar_events").select("*").eq("org_id", orgId).order("starts_at", { ascending: true }).limit(500);
   if (kind) q = q.eq("kind", kind);
   if (branchId) q = q.eq("branch_id", branchId);
   if (ownerId) q = q.eq("owner_id", ownerId);

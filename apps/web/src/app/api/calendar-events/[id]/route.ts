@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -8,6 +9,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = (await req.json()) as { starts_at?: string; ends_at?: string; title?: string; location?: string };
   const sb = crmClient();
+  const orgId = await getOrgId();
   const update: Record<string, unknown> = {};
   if (body.starts_at) update.starts_at = body.starts_at;
   if (body.ends_at) update.ends_at = body.ends_at;
@@ -18,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await emitEvent(sb, {
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     type: data.kind === "job" ? "job.rescheduled" : "calendar_event.updated",
     related_type: "calendar_event",
     related_id: id,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { crmClient, DEFAULT_ORG_ID } from "@/lib/crmdb";
+import { crmClient } from "@/lib/crmdb";
+import { getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -10,7 +11,8 @@ export async function GET(req: Request) {
   const date = url.searchParams.get("date");
   const branchId = url.searchParams.get("branch_id");
   const sb = crmClient();
-  let q = sb.from("jobs").select("*").eq("org_id", DEFAULT_ORG_ID).order("service_date", { ascending: true }).limit(500);
+  const orgId = await getOrgId();
+  let q = sb.from("jobs").select("*").eq("org_id", orgId).order("service_date", { ascending: true }).limit(500);
   if (status && status !== "all") q = q.eq("status", status);
   if (customerId) q = q.eq("customer_id", customerId);
   if (date) q = q.eq("service_date", date);
