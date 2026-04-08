@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "G",
-  "last_completed_task": "Phase G complete — callscraper sync v2 shipped: phone.ts, sync-state.ts, upsert-customer.ts, sync-callscraper-v2.ts (syncCalls/syncCallSummaries/syncLeads/runFullSync with sync.run.completed events + per-entity error isolation), /api/sync/callscraper POST + GET, vercel.json crons (15m delta + hourly full), /api/sync/status, /settings/integrations/callscraper UI, /api/calls/recent prefers CRM activities and falls back to upstream, sales command center leaderboard falls back to brand grouping until real assignments exist",
-  "current_phase": "H",
-  "current_task": "AI tools on every page — per-section Claude sidebar context, coaching rubric, /sales/coaching page, Estimate Drafter agent",
+  "last_completed_phase": "H",
+  "last_completed_task": "Phase H complete — 7 river tools in /api/ai/chat + ai_usage logging + 402 on missing key; AiSidebar entity context + quick action chips per page; Estimate Drafter agent (POST /api/agents/draft-estimate) with Draft with AI button on customer detail Estimate tab; pure-TS coaching-rubric.ts classifier; nightly /api/agents/coach-calls cron (8am UTC) inserting into call_coaching; /sales/coaching page with summary tiles, grade distribution, filter chips, and coaching drawer (strengths/improvements/flags/transcript/coach notes/mark reviewed); nav.ts gained Sales → Command Center + Coaching leaves",
+  "current_phase": "Done",
+  "current_task": "Ready for pre-launch: auth wall, Twilio wiring, Stripe billing, production deploy",
   "blockers": [],
   "next_3_tasks": [
-    "Extend /api/ai/chat with tools: create_opportunity, create_task, book_job, send_template, search_customers, get_customer_timeline",
-    "Build Estimate Drafter agent: read opportunity → draft charges_json → human approval flow",
-    "/sales/coaching page + local rubric classifier in packages/pricing or packages/shared-types"
+    "Supabase auth wall + org-scoped RLS (replace DEFAULT_ORG_ID with session org)",
+    "Twilio adapter for inbound call + SMS webhooks (/api/webhooks/twilio/*)",
+    "Stripe billing + workspace plans + ANTHROPIC_API_KEY storage in integration_credentials"
   ],
-  "test_status": "tsc clean; vocab clean; href# zero; schemas verified via MCP",
+  "test_status": "tsc clean; vocab clean; href# zero; stub/TODO onClick zero",
   "build_status": "tsc_clean",
-  "last_commit": "phase-G8: sales command center wired to synced data [tsc: clean]"
+  "last_commit": "phase-H8: final integration checks pass [tsc: clean]"
 }
