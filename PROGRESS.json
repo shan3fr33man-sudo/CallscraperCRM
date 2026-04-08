@@ -1,15 +1,15 @@
 {
-  "last_completed_phase": "B",
-  "last_completed_task": "river engine + 5 automations seeded (disabled) + E2E passes",
-  "current_phase": "C",
-  "current_task": "Topbar with UserMenu + NewMenu + NotificationsBell + global search",
+  "last_completed_phase": "C",
+  "last_completed_task": "Topbar with global search + NewMenu + NotificationsBell + UserMenu + 4 RecordForms + 4 settings leaves",
+  "current_phase": "D",
+  "current_task": "Calendar (Office + Job views) with @fullcalendar/react",
   "blockers": [],
   "next_3_tasks": [
-    "Build apps/web/src/components/Topbar.tsx replacing TopBar.tsx",
-    "Build UserMenu, NewMenu, NotificationsBell, RecordForm components",
-    "Add /api/search/global route querying customers, opportunities, jobs, tasks"
+    "Install @fullcalendar/react + plugins (daygrid, timegrid, interaction)",
+    "Build CalendarView component reading /api/calendar-events?kind=office|job",
+    "Add /calendars/office, /calendars/job, /calendars/rate-overrides static routes"
   ],
-  "test_status": "tsc clean; vocab clean; E2E river verified (4 events, 3 runs, 2 tasks, 1 cal, 2 sms, 1 job)",
+  "test_status": "tsc clean; vocab clean; href# zero",
   "build_status": "tsc_clean",
-  "last_commit": "69a8374"
+  "last_commit": "pending phase-C"
 }

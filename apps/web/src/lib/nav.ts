@@ -111,6 +111,8 @@ export const NAV: Section[] = [
       { slug: "sms-usage", label: "Text Message Usage" },
       { slug: "sms-campaigns", label: "SMS Campaigns" },
       { slug: "templates", label: "Email / SMS Templates" },
+      { slug: "billing", label: "Billing" },
+      { slug: "notifications", label: "Notifications" },
       { slug: "labs", label: "Labs" },
     ]},
     { slug: "estimates", label: "Estimates", children: [
@@ -216,6 +218,8 @@ export const NAV: Section[] = [
     ]},
     { slug: "integrations", label: "Integrations", children: [
       { slug: "library", label: "Integration Library" },
+      { slug: "api-keys", label: "API Keys" },
+      { slug: "import", label: "Import Data" },
     ]},
     { slug: "workflow", label: "Workflow Automation", children: [
       { slug: "rules", label: "Automation Rules" },
