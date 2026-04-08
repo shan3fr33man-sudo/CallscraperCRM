@@ -100,6 +100,7 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
   const [values, setValues] = useState<Record<string, string>>(prefill ?? {});
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [remoteOpts, setRemoteOpts] = useState<Record<string, { value: string; label: string }[]>>({});
 
   useEffect(() => {
@@ -117,8 +118,33 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
 
   function set(k: string, v: string) { setValues((prev) => ({ ...prev, [k]: v })); }
 
+  function validate(): boolean {
+    const errs: Record<string, string> = {};
+    for (const f of cfg.fields) {
+      const v = values[f.key] ?? "";
+      if (f.type === "customer_autocomplete") {
+        if (f.required && !values.customer_id) errs[f.key] = "Customer is required";
+        continue;
+      }
+      if (f.required && !v.trim()) { errs[f.key] = "This field is required"; continue; }
+      if (f.type === "text" && "minLength" in f && f.minLength && v.length < f.minLength) errs[f.key] = `Must be at least ${f.minLength} characters`;
+      if (f.type === "phone" && v && v.replace(/\D/g, "").length < 10) errs[f.key] = "Enter a valid phone number";
+      if (f.type === "number" && v) {
+        const n = Number(v);
+        if ("min" in f && f.min !== undefined && n < f.min) errs[f.key] = `Must be ≥ ${f.min}`;
+        if ("max" in f && f.max !== undefined && n > f.max) errs[f.key] = `Must be ≤ ${f.max}`;
+      }
+      if (f.type === "datetime" && v && f.key === "due_at") {
+        if (new Date(v).getTime() < Date.now() - 60_000) errs[f.key] = "Date must be in the future";
+      }
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!validate()) return;
     setSubmitting(true);
     setErr(null);
     try {
@@ -280,6 +306,13 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
           <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-3">
+          {err && (
+            <div className="flex items-start justify-between gap-2 p-2 rounded-md bg-red-50 border border-red-300 text-red-700 text-xs">
+              <span>Could not save. {err}</span>
+              <button type="button" onClick={() => setErr(null)} className="font-bold">×</button>
+            </div>
+          )}
+          <fieldset disabled={submitting} className="space-y-3">
           {cfg.fields.map((f) => {
             const opts = f.type === "select" ? f.options : f.type === "remote_select" ? remoteOpts[f.key] ?? [] : null;
             return (
@@ -309,10 +342,11 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
                     {(opts ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 )}
+                {fieldErrors[f.key] && <div className="text-[10px] text-red-600 mt-0.5">{fieldErrors[f.key]}</div>}
               </div>
             );
           })}
-          {err && <div className="text-xs text-red-600">{err}</div>}
+          </fieldset>
           <div className="flex gap-2 pt-2">
             <button type="submit" disabled={submitting} className="px-3 py-1.5 text-sm rounded-md bg-accent text-white disabled:opacity-50">{submitting ? "Saving…" : "Create"}</button>
             <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm rounded-md border border-border">Cancel</button>
