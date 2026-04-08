@@ -27,6 +27,8 @@ export const NAV: Section[] = [
     { slug: "my-leads", label: "My Leads" },
     { slug: "follow-ups", label: "Follow-ups" },
     { slug: "goals", label: "Sales Goals" },
+    { slug: "command-center", label: "Command Center" },
+    { slug: "coaching", label: "Coaching" },
   ]},
   { slug: "customers", label: "Customers", icon: "Users", subtabs: [
     { slug: "opportunities", label: "Opportunities" },
