@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-const PROVIDERS = ["anthropic", "twilio", "resend"] as const;
+const PROVIDERS = ["anthropic", "twilio", "resend", "callscraper"] as const;
 type Provider = (typeof PROVIDERS)[number];
 
 function validateKey(provider: Provider, key: string): string | null {
@@ -12,6 +12,7 @@ function validateKey(provider: Provider, key: string): string | null {
   if (provider === "anthropic" && !key.startsWith("sk-ant-")) return "Anthropic keys start with sk-ant-";
   if (provider === "twilio" && !key.startsWith("SK")) return "Twilio API Key SID starts with SK";
   if (provider === "resend" && !key.startsWith("re_")) return "Resend keys start with re_";
+  if (provider === "callscraper" && key.length < 10) return "CallScraper API key too short";
   return null;
 }
 

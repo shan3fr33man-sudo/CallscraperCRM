@@ -68,6 +68,7 @@ VALUES ('<org-uuid>', '<user-uuid>', 'owner');
 
 ## 6. What Remains (v1.1)
 
+- **CallScraper REST API adapter** — typed client at `lib/callscraper-rest.ts` is ready to connect; Ken needs to build the `/api/v1/*` endpoints on callscraper.com. Store your API key at Settings → Integrations → API Keys (provider: callscraper) or set `CALLSCRAPER_API_KEY` env var. Test endpoint: `GET /api/sync/callscraper/test-rest`.
 - Twilio voice + SMS webhook wiring (schema ready; adapter interface in `packages/integrations`)
 - LiveSwitch + QuoteSheets video inventory adapters
 - CSV import parser body (route scaffold exists at `/settings/integrations/import`)
@@ -85,5 +86,8 @@ VALUES ('<org-uuid>', '<user-uuid>', 'owner');
 - `apps/web/src/app/api/settings/api-keys/route.ts` — per-workspace key CRUD
 - `vercel.json` — cron schedules
 - `.env.production.example` — required env vars
+- `apps/web/src/lib/callscraper-rest.ts` — REST API adapter (ready for when Ken's API launches)
+- `apps/web/src/lib/sync-callscraper-v2.ts` — batch-optimized sync (calls, summaries, leads)
+- `apps/web/src/lib/upsert-customer.ts` — customer upsert with batch support
 - `SYNC_VERIFICATION.md` — post-deploy checklist
 - `apps/web/e2e/smoke.spec.ts` — route smoke tests
