@@ -153,33 +153,25 @@ export async function syncCallSummaries(): Promise<SyncResult> {
       const rows = data ?? [];
       if (rows.length === 0) break;
 
-      // --- Batch: find matching activities for all call_ids ---
-      const callIds = rows.filter((r) => r.call_id).map((r) => String(r.call_id));
-      const orFilterSummary = callIds.map((cid) => `payload->>external_id.eq.${cid}`).join(",");
-      const { data: matchedActs } = callIds.length > 0
-        ? await sb
-            .from("activities")
-            .select("id, record_id, payload")
-            .eq("org_id", DEFAULT_ORG_ID)
-            .eq("kind", "call")
-            .or(orFilterSummary)
-        : { data: [] };
-
-      const actByCallId = new Map<string, { id: string; record_id: string | null; payload: Record<string, unknown> }>();
-      for (const act of matchedActs ?? []) {
-        const extId = (act.payload as Record<string, unknown>)?.external_id;
-        if (extId) actByCallId.set(String(extId), {
-          id: act.id as string,
-          record_id: act.record_id as string | null,
-          payload: (act.payload as Record<string, unknown>) ?? {},
-        });
-      }
-
-      // --- Process each summary ---
+      // --- Process each summary: find matching activity individually ---
+      // Note: batch or() filter on payload->>external_id breaks with large batches in PostgREST
       for (const r of rows) {
         if (!r.call_id) continue;
-        const act = actByCallId.get(String(r.call_id));
-        if (!act) continue;
+
+        const { data: acts } = await sb
+          .from("activities")
+          .select("id, record_id, payload")
+          .eq("org_id", DEFAULT_ORG_ID)
+          .eq("kind", "call")
+          .eq("payload->>external_id", String(r.call_id))
+          .limit(1);
+
+        if (!acts || acts.length === 0) continue;
+        const act = {
+          id: acts[0].id as string,
+          record_id: acts[0].record_id as string | null,
+          payload: (acts[0].payload as Record<string, unknown>) ?? {},
+        };
 
         const merged = {
           ...act.payload,

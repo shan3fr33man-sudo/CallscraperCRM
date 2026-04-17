@@ -62,12 +62,48 @@ function addHours(iso: string | Date | undefined, hours: number): string {
   return new Date(base.getTime() + hours * 3600_000).toISOString();
 }
 
+/** Enrich the context by fetching related records when we have IDs but missing display fields. */
+async function enrichContext(
+  supabase: SupabaseClient,
+  ev: EventRow,
+  baseCtx: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const ctx = { ...baseCtx };
+  // If we have an opportunity_id but no service_date/customer_name, fetch the opportunity + customer
+  const oppId = (ev.payload.opportunity_id ?? ev.related_id) as string | undefined;
+  if (oppId && (!ctx.service_date || !ctx.customer_name)) {
+    const { data: opp } = await supabase
+      .from("opportunities")
+      .select("service_date, move_type, amount, customer_id, status")
+      .eq("id", oppId)
+      .maybeSingle();
+    if (opp) {
+      if (!ctx.service_date && opp.service_date) ctx.service_date = opp.service_date;
+      if (!ctx.move_type && opp.move_type) ctx.move_type = opp.move_type;
+      if (!ctx.amount && opp.amount) ctx.amount = opp.amount;
+      // Fetch customer name
+      const custId = (ev.payload.customer_id ?? opp.customer_id) as string | undefined;
+      if (custId && !ctx.customer_name) {
+        const { data: cust } = await supabase
+          .from("customers")
+          .select("customer_name")
+          .eq("id", custId)
+          .maybeSingle();
+        if (cust?.customer_name) ctx.customer_name = cust.customer_name;
+      }
+    }
+  }
+  // Wrap enriched data under payload for interpolation
+  return { ...ctx, payload: { ...ev.payload, ...ctx } };
+}
+
 async function runAction(
   supabase: SupabaseClient,
   ev: EventRow,
   action: Action
 ): Promise<void> {
-  const ctx = { event: ev, payload: ev.payload };
+  const baseCtx = { event: ev, payload: ev.payload, ...ev.payload };
+  const ctx = await enrichContext(supabase, ev, baseCtx);
   const p = action.params;
 
   switch (action.type) {
@@ -94,15 +130,28 @@ async function runAction(
       return;
     }
     case "create_calendar_event": {
-      const startsAt = (p.starts_at as string) ?? new Date().toISOString();
+      // Resolve starts_at: can be a literal ISO string, or "{{payload.service_date}}" placeholder
+      let startsAt = interpolate((p.starts_at as string) ?? "", ctx);
+      if (!startsAt || startsAt === "null" || startsAt === "undefined") {
+        // No date available — skip creating the event
+        return;
+      }
+      // Handle date-only strings (YYYY-MM-DD → append T09:00:00)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(startsAt)) {
+        startsAt = `${startsAt}T09:00:00`;
+      }
+      // Validate the date
+      const parsed = new Date(startsAt);
+      if (isNaN(parsed.getTime())) return;
+
       const durationH = (p.duration_hours as number) ?? 1;
       await supabase.from("calendar_events").insert({
         org_id: ev.org_id,
         kind: (p.kind as string) ?? "office",
         event_type: (p.event_type as string) ?? "other",
         title: interpolate((p.title as string) ?? "Event", ctx),
-        starts_at: startsAt,
-        ends_at: addHours(startsAt, durationH),
+        starts_at: parsed.toISOString(),
+        ends_at: addHours(parsed.toISOString(), durationH),
         related_type: ev.related_type,
         related_id: ev.related_id,
       });

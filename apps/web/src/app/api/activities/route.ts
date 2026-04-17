@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   let q = sb.from("activities").select("*").eq("org_id", orgId).order("created_at", { ascending: false }).limit(200);
   if (relatedType) q = q.eq("related_type", relatedType);
   if (relatedId) q = q.eq("related_id", relatedId);
-  if (customerId) q = q.eq("customer_id", customerId);
+  if (customerId) q = q.eq("record_id", customerId);
   const { data, error } = await q;
   if (error) return NextResponse.json({ activities: [] });
   return NextResponse.json({ activities: data ?? [] });
