@@ -7,13 +7,27 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/invoices/[id]/send — send invoice via email/sms (logs to email_logs/sms_logs).
- * Body: { channel?: "email"|"sms"|"both", to?, message? }
+ *
+ * Body:
+ *   {
+ *     channel?: "email" | "sms" | "both",
+ *     to?: string,         // legacy single-channel override
+ *     to_email?: string,   // explicit email override (works for "both" mode)
+ *     to_phone?: string,   // explicit phone override
+ *     message?: string,
+ *   }
+ *
+ * Recipient resolution mirrors /api/estimates/[id]/send: explicit
+ * to_email/to_phone > legacy `to` > customer-on-file. This ensures "both"
+ * mode honors edited recipients in either channel.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as {
     channel?: "email" | "sms" | "both";
     to?: string;
+    to_email?: string;
+    to_phone?: string;
     message?: string;
   };
   const channel = body.channel ?? "email";
@@ -33,12 +47,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const pdfUrl = `${baseUrl}/api/invoices/${id}/pdf`;
 
-  if ((channel === "email" || channel === "both") && cust.customer_email) {
+  const sendEmail = channel === "email" || channel === "both";
+  const sendSms = channel === "sms" || channel === "both";
+  const recipientEmail =
+    body.to_email ??
+    (body.to && channel === "email" ? body.to : undefined) ??
+    (cust.customer_email as string | undefined);
+  const recipientPhone =
+    body.to_phone ??
+    (body.to && channel === "sms" ? body.to : undefined) ??
+    (cust.customer_phone as string | undefined);
+
+  if (sendEmail && recipientEmail) {
     await sb.from("email_logs").insert({
       org_id: orgId,
       customer_id: invoice.customer_id,
       template_key: "invoice.sent",
-      to_email: body.to ?? (cust.customer_email as string),
+      to_email: recipientEmail,
       from_email: process.env.DEFAULT_FROM_EMAIL ?? "billing@example.com",
       subject: `Invoice ${invoice.invoice_number} — $${invoice.amount_due}`,
       body:
@@ -49,12 +74,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       related_id: id,
     });
   }
-  if ((channel === "sms" || channel === "both") && cust.customer_phone) {
+  if (sendSms && recipientPhone) {
     await sb.from("sms_logs").insert({
       org_id: orgId,
       customer_id: invoice.customer_id,
       template_key: "invoice.sent",
-      to_number: body.to ?? (cust.customer_phone as string),
+      to_number: recipientPhone,
       from_number: process.env.DEFAULT_FROM_NUMBER ?? null,
       message:
         body.message ??

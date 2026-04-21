@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DollarSign, AlertCircle, CheckCircle, Send, FileText } from "lucide-react";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, StatusBadge } from "@/components/ui";
 
 type Invoice = {
   id: string;
@@ -33,6 +34,7 @@ function ageBucket(dueDate: string | null): "current" | "1-30" | "31-60" | "61-9
 }
 
 export default function AccountsReceivablePage() {
+  const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [customers, setCustomers] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -203,8 +205,23 @@ export default function AccountsReceivablePage() {
               </tr>
             )}
             {!loading &&
-              visible.map((i) => (
-                <tr key={i.id} className="border-t border-border hover:bg-accent/5">
+              visible.map((i) => {
+                const openDetail = () => router.push(`/accounting/invoices/${i.id}`);
+                return (
+                <tr
+                  key={i.id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={openDetail}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openDetail();
+                    }
+                  }}
+                  className="border-t border-border hover:bg-accent/5 cursor-pointer focus-visible:outline-none focus-visible:bg-accent/10"
+                  aria-label={`Open invoice ${i.invoice_number}`}
+                >
                   <td className="px-3 py-2 font-mono text-xs">{i.invoice_number}</td>
                   <td className="px-3 py-2 text-xs">
                     {i.customer_id ? customers.get(i.customer_id) ?? "—" : "—"}
@@ -221,36 +238,31 @@ export default function AccountsReceivablePage() {
                   </td>
                   <td className="px-3 py-2 text-xs">{i.due_date ?? "—"}</td>
                   <td className="px-3 py-2 text-xs">{ageBucket(i.due_date)}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-1">
                       <a
                         href={`/api/invoices/${i.id}/pdf`}
                         target="_blank"
-                        className="text-xs px-1.5 py-0.5 rounded border border-border hover:bg-background"
+                        rel="noopener noreferrer"
+                        className="text-xs px-1.5 py-0.5 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                         title="Download PDF"
                       >
                         <FileText className="w-3 h-3" />
                       </a>
                       {i.status !== "paid" && (
-                        <button
-                          onClick={async () => {
-                            await fetch(`/api/invoices/${i.id}/send`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ channel: "email" }),
-                            });
-                            reload();
-                          }}
-                          className="text-xs px-1.5 py-0.5 rounded border border-border hover:bg-background"
-                          title="Send"
+                        <a
+                          href={`/accounting/invoices/${i.id}`}
+                          className="text-xs px-1.5 py-0.5 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                          title="Open invoice to send or record payment"
                         >
                           <Send className="w-3 h-3" />
-                        </button>
+                        </a>
                       )}
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
           </tbody>
         </table>
       </div>
@@ -298,15 +310,5 @@ function SummaryCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    draft: "bg-accent/10 text-accent",
-    sent: "bg-blue-50 text-blue-700",
-    partial: "bg-amber-50 text-amber-700",
-    paid: "bg-green-50 text-green-700",
-    overdue: "bg-red-50 text-red-700",
-    void: "bg-gray-100 text-gray-500",
-  };
-  const cls = styles[status] ?? "bg-gray-100";
-  return <span className={`text-xs px-2 py-0.5 rounded ${cls}`}>{status}</span>;
-}
+// NOTE: local StatusBadge removed; use the D1 primitive imported above so
+// dark-mode + light-mode colors stay consistent with the rest of the app.

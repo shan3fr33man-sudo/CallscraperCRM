@@ -28,6 +28,18 @@ Format: `[status] [severity] [module] description — action`
   validation before POST (regex or zod email/E.164 phone) and return
   structured API errors for provider-level failures.
 
+### F4 review deferrals
+
+- **open** MAJOR (F4) `apps/web/src/app/api/payments/route.ts` — no idempotency
+  on payments. A user double-clicking Record Payment in two tabs records two
+  rows; the DB trigger rolls up correctly but the history shows two entries.
+  PaymentRecorder has an in-component `submitting` guard (M3 review addressed
+  single-tab double-click via `if (submitting || done) return`). Proper fix
+  needs an idempotency key passed from client, stored via UNIQUE(invoice_id,
+  idempotency_key).
+  Action: add when Stripe webhooks land in Phase 4 — same idempotency
+  infrastructure applies to card payments.
+
 ### Post-Codex direction-review concerns (to honor during remaining modules)
 
 - **open** CONCERN (process) Review fatigue risk over 8 more modules
