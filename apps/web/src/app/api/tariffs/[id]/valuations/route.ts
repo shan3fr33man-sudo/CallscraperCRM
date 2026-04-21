@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { createValuationSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -25,19 +27,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, createValuationSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { data, error } = await sb
     .from("tariff_valuations")
-    .insert({
-      tariff_id: id,
-      name: body.name ?? "Valuation",
-      coverage_type: body.coverage_type ?? "released_value",
-      deductible: body.deductible ?? 0,
-      rate_per_thousand: body.rate_per_thousand ?? 0,
-    })
+    .insert({ tariff_id: id, ...body })
     .select("*")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

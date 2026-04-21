@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { updateModifierSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -27,17 +29,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; modId: string }> },
 ) {
   const { id, modId } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, updateModifierSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
   if (!(await verifyOwnership(sb, id, modId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
-  const allowed: Record<string, unknown> = {};
-  for (const k of ["kind", "label", "formula_json", "stacking_order"]) {
-    if (k in body) allowed[k] = body[k];
-  }
-  const { data, error } = await sb.from("tariff_modifiers").update(allowed).eq("id", modId).select("*").single();
+  const { data, error } = await sb.from("tariff_modifiers").update(body).eq("id", modId).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ modifier: data });
 }

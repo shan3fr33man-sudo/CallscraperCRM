@@ -78,6 +78,20 @@ export async function POST(req: Request) {
     deposit_amount: body.deposit_amount ?? 0,
   };
 
+  // If the caller explicitly passes tariff_id (either engine path or manual
+  // path), verify it belongs to this org before we write it anywhere.
+  if (body.tariff_id) {
+    const { data: ownedTariff } = await sb
+      .from("tariffs")
+      .select("id")
+      .eq("id", body.tariff_id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!ownedTariff) {
+      return NextResponse.json({ error: "tariff_id does not exist in this org" }, { status: 404 });
+    }
+  }
+
   // Engine path: we have estimate_input → run pricing engine
   if (body.estimate_input) {
     const inputParsed = estimateInputSchema.safeParse(body.estimate_input);
@@ -109,6 +123,7 @@ export async function POST(req: Request) {
           .from("opportunities")
           .select("branch_id, service_type, opportunity_type")
           .eq("id", body.opportunity_id)
+          .eq("org_id", orgId)
           .maybeSingle();
         if (opp) {
           branch_id = (opp.branch_id as string | null) ?? null;
@@ -116,7 +131,18 @@ export async function POST(req: Request) {
           opportunity_type = (opp.opportunity_type as string | null) ?? null;
         }
       }
-      const { data: assigns } = await sb.from("tariff_assignments").select("*");
+      // Scope tariff assignments to this org via a two-step lookup. PostgREST's
+      // embedded-resource filter syntax has edge cases on older servers where
+      // the filter can silently become a no-op; the explicit pattern is safer.
+      const { data: orgTariffs } = await sb
+        .from("tariffs")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("archived", false);
+      const orgTariffIds = (orgTariffs ?? []).map((t) => t.id);
+      const { data: assigns } = orgTariffIds.length
+        ? await sb.from("tariff_assignments").select("*").in("tariff_id", orgTariffIds)
+        : { data: [] };
       tariffId =
         resolveTariff(assigns ?? [], { branch_id, service_type, opportunity_type }) ?? undefined;
       if (!tariffId) {

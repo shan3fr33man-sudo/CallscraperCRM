@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { updateRateSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -29,7 +31,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
   const { id, rateId } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, updateRateSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
 
@@ -37,12 +41,7 @@ export async function PATCH(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const allowed: Record<string, unknown> = {};
-  for (const k of ["kind", "label", "base_rate", "min_charge", "unit", "conditions_json"]) {
-    if (k in body) allowed[k] = body[k];
-  }
-
-  const { data, error } = await sb.from("tariff_rates").update(allowed).eq("id", rateId).select("*").single();
+  const { data, error } = await sb.from("tariff_rates").update(body).eq("id", rateId).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ rate: data });
 }

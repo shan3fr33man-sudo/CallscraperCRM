@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { createTariffSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -37,22 +39,37 @@ export async function GET(req: Request) {
 
 /** POST /api/tariffs — create a new tariff. */
 export async function POST(req: Request) {
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, createTariffSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
+
+  // Verify branch belongs to this org before allowing the tariff to link to it
+  if (body.branch_id) {
+    const { data: branch } = await sb
+      .from("branches")
+      .select("id")
+      .eq("id", body.branch_id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!branch) {
+      return NextResponse.json({ error: "branch_id does not exist in this org" }, { status: 404 });
+    }
+  }
 
   const { data, error } = await sb
     .from("tariffs")
     .insert({
       org_id: orgId,
-      name: body.name ?? "New Tariff",
+      name: body.name,
       branch_id: body.branch_id ?? null,
       service_type: body.service_type ?? null,
       effective_from: body.effective_from ?? null,
       effective_to: body.effective_to ?? null,
-      currency: body.currency ?? "USD",
-      rounding_rule: body.rounding_rule ?? "nearest_cent",
-      is_default: body.is_default ?? false,
+      currency: body.currency,
+      rounding_rule: body.rounding_rule,
+      is_default: body.is_default,
     })
     .select("*")
     .single();

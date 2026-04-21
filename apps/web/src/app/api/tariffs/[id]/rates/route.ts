@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { createRateSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -21,7 +23,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 /** POST /api/tariffs/[id]/rates — add a rate. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, createRateSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
 
@@ -30,15 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { data, error } = await sb
     .from("tariff_rates")
-    .insert({
-      tariff_id: id,
-      kind: body.kind ?? "labor",
-      label: body.label ?? null,
-      base_rate: body.base_rate ?? 0,
-      min_charge: body.min_charge ?? 0,
-      unit: body.unit ?? "hour",
-      conditions_json: body.conditions_json ?? {},
-    })
+    .insert({ tariff_id: id, ...body })
     .select("*")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

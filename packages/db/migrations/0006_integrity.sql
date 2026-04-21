@@ -163,6 +163,15 @@ alter table tariff_valuations drop constraint if exists tariff_valuations_covera
 alter table tariff_valuations add constraint tariff_valuations_coverage_valid
   check (coverage_type is null or coverage_type in ('released_value','full_replacement','lump_sum'));
 
+-- Tariff-level rounding rule and modifier formula type enums
+alter table tariffs drop constraint if exists tariffs_rounding_valid;
+alter table tariffs add constraint tariffs_rounding_valid
+  check (rounding_rule is null or rounding_rule in ('nearest_cent','nearest_dollar','ceil_dollar','floor_dollar','none'));
+
+alter table tariff_modifiers drop constraint if exists tariff_modifiers_formula_type_valid;
+alter table tariff_modifiers add constraint tariff_modifiers_formula_type_valid
+  check (formula_json ? 'type' and (formula_json->>'type') in ('percentage','flat','per_flight','per_100lbs','per_item'));
+
 -- Backfill: recompute rollup for any existing invoices so the stored
 -- balance/amount_paid/status matches what the trigger would produce going
 -- forward. Runs the same logic as recompute_invoice_rollup() but in bulk.

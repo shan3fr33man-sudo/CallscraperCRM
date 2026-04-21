@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody, stripUndefined } from "@/lib/validate";
+import { updateTariffSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -54,29 +56,34 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 /** PATCH /api/tariffs/[id] — update tariff metadata. */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, updateTariffSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
 
-  // Whitelist patchable fields
-  const allowed: Record<string, unknown> = {};
-  for (const k of [
-    "name",
-    "branch_id",
-    "service_type",
-    "effective_from",
-    "effective_to",
-    "currency",
-    "rounding_rule",
-    "is_default",
-    "archived",
-  ]) {
-    if (k in body) allowed[k] = body[k];
+  // Branch ownership check if being reassigned
+  if (body.branch_id) {
+    const { data: branch } = await sb
+      .from("branches")
+      .select("id")
+      .eq("id", body.branch_id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!branch) {
+      return NextResponse.json({ error: "branch_id does not exist in this org" }, { status: 404 });
+    }
+  }
+
+  // Strip undefined so omitted fields aren't written as null
+  const patch = stripUndefined(body as Record<string, unknown>);
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
   const { data, error } = await sb
     .from("tariffs")
-    .update(allowed)
+    .update(patch)
     .eq("id", id)
     .eq("org_id", orgId)
     .select("*")

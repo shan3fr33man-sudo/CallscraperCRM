@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { createAssignmentSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -29,19 +31,29 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, createAssignmentSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
+
+  // Branch ownership check if specified
+  if (body.branch_id) {
+    const { data: branch } = await sb
+      .from("branches")
+      .select("id")
+      .eq("id", body.branch_id)
+      .eq("org_id", orgId)
+      .maybeSingle();
+    if (!branch) {
+      return NextResponse.json({ error: "branch_id does not exist in this org" }, { status: 404 });
+    }
+  }
+
   const { data, error } = await sb
     .from("tariff_assignments")
-    .insert({
-      tariff_id: id,
-      branch_id: body.branch_id ?? null,
-      opportunity_type: body.opportunity_type ?? null,
-      service_type: body.service_type ?? null,
-      priority: body.priority ?? 0,
-    })
+    .insert({ tariff_id: id, ...body })
     .select("*")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

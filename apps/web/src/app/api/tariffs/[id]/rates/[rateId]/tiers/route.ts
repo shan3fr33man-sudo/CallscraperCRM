@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { parseBody } from "@/lib/validate";
+import { createTierSchema } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
 
@@ -44,7 +46,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
   const { rateId } = await params;
-  const body = (await req.json()) as Record<string, unknown>;
+  const body = await parseBody(req, createTierSchema);
+  if (body instanceof Response) return body;
+
   const sb = crmClient();
   const orgId = await getOrgId();
   if (!(await verifyOwnership(sb, rateId, orgId))) {
@@ -52,11 +56,7 @@ export async function POST(
   }
   const { data, error } = await sb
     .from("tariff_tiers")
-    .insert({
-      tariff_rate_id: rateId,
-      threshold: body.threshold ?? 0,
-      rate: body.rate ?? 0,
-    })
+    .insert({ tariff_rate_id: rateId, ...body })
     .select("*")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
