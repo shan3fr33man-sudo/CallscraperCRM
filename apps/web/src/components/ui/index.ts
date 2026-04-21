@@ -15,6 +15,9 @@ export type { ErrorBannerProps } from "./ErrorBanner";
 export { Field } from "./Field";
 export type { FieldProps } from "./Field";
 
+export { InlineEditableTable } from "./InlineEditableTable";
+export type { InlineEditableColumn, InlineEditableTableProps } from "./InlineEditableTable";
+
 export { Input } from "./Input";
 export type { InputProps } from "./Input";
 

@@ -28,6 +28,26 @@ Format: `[status] [severity] [module] description — action`
   validation before POST (regex or zod email/E.164 phone) and return
   structured API errors for provider-level failures.
 
+### F5 review deferrals
+
+- **open** MAJOR (F5) PDF template assumes `quantity` and `rate` are truthy
+  when rendering a line item. A manually-edited flat-rate line (label +
+  subtotal only, no qty/rate) will render as "Qty: 1, Rate: $0.00" which
+  looks buggy even though totals are correct.
+  Action: in `apps/web/src/lib/pdf/estimate-template.tsx`, when a line item
+  has no qty/rate, collapse those cells and give Description the extra
+  width. Do the same for the customer-facing `/estimate/[id]` page and
+  the invoice PDF in parallel.
+
+- **open** MAJOR (F5) Rounding drift when a tariff-engine estimate used a
+  non-default `rounding_rule` (e.g. `ceil_dollar`) and is later PATCHed
+  manually. The PATCH route unconditionally re-rounds with `nearest_cent`
+  which can shift a $2,001.00 estimate to $2,000.57 on save.
+  Action: stamp the tariff's `rounding_rule` on the estimate row at
+  creation time (new column), then reuse it on every recompute in the
+  PATCH route. Alternatively, skip the recompute write when the computed
+  totals match what's already on the row to the cent.
+
 ### F4 review deferrals
 
 - **open** MAJOR (F4) `apps/web/src/app/api/payments/route.ts` — no idempotency

@@ -136,6 +136,59 @@ export const createAssignmentSchema = z.object({
   priority: z.number().int().default(0),
 });
 
+// ─── Estimate line items + PATCH schema ────────────────────────────
+
+/**
+ * Single estimate line item as stored in `estimates.charges_json` and
+ * consumed by the pricing engine / PDF template. Kept permissive: the
+ * engine's `PricingLineItem` shape is the canonical format, but manually-
+ * edited line items may have only a label + subtotal and we should still
+ * accept them (the rest is optional display metadata).
+ */
+export const estimateLineItemSchema = z.object({
+  label: z.string().trim().min(1).max(200),
+  kind: z
+    .enum(["labor", "truck", "material", "packing", "travel", "flat", "mileage"])
+    .optional(),
+  rate: z.number().finite().optional(),
+  quantity: z.number().finite().min(0).optional(),
+  unit: z.enum(["hour", "mile", "cwt", "flat", "each", "day"]).optional(),
+  // Subtotals must be non-negative. Credits / adjustments are modeled as
+  // `discounts` at the estimate level, not negative line-item subtotals.
+  subtotal: z.number().finite().min(0),
+  rate_id: z.string().optional(), // set by the engine; preserved on manual edit
+});
+
+/**
+ * PATCH /api/estimates/[id] body. Every field is optional — pass only the
+ * ones you want to change. The route recomputes `subtotal` from the line
+ * items and `amount` from subtotal - discounts + sales_tax server-side,
+ * so the client can't send inconsistent totals. Clients should just send
+ * `charges_json` + optionally `discounts` / `sales_tax` / tax_rate.
+ */
+export const updateEstimateSchema = z
+  .object({
+    charges_json: z.array(estimateLineItemSchema).min(1).optional(),
+    discounts: z.number().finite().min(0).optional(),
+    sales_tax: z.number().finite().min(0).optional(),
+    tax_rate: z.number().finite().min(0).max(1).optional(), // alternative to sales_tax
+    valid_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+    estimate_type: z
+      .enum(["binding", "non_binding", "binding_nte", "hourly", "flat_rate"])
+      .optional(),
+    deposit_amount: z.number().finite().min(0).optional(),
+    notes: z.string().max(2000).optional(),
+  })
+  .strict()
+  // Mutual exclusion between sales_tax and tax_rate (F5 review M4): pick one.
+  .refine((v) => v.sales_tax === undefined || v.tax_rate === undefined, {
+    message: "Pass either sales_tax OR tax_rate, not both.",
+    path: ["tax_rate"],
+  });
+
+export type EstimateLineItem = z.infer<typeof estimateLineItemSchema>;
+export type UpdateEstimateInput = z.infer<typeof updateEstimateSchema>;
+
 // ─── Type exports (inferred from schemas) ──────────────────────────
 
 export type CreateTariffInput = z.infer<typeof createTariffSchema>;

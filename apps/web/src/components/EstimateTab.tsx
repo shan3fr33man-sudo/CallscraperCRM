@@ -4,7 +4,9 @@ import { Plus, Send, FileText, Check, ExternalLink } from "lucide-react";
 import { InventoryEditor } from "@/components/InventoryEditor";
 import { DepositCollector } from "@/components/DepositCollector";
 import { SendEstimateDialog } from "@/components/SendEstimateDialog";
+import { LineItemEditor, type LineItem } from "@/components/LineItemEditor";
 import { Button, EmptyState } from "@/components/ui";
+import { Pencil } from "lucide-react";
 
 type Opp = {
   id: string;
@@ -24,6 +26,8 @@ type Estimate = {
   amount: number;
   subtotal: number;
   sales_tax: number;
+  discounts: number;
+  charges_json: Array<Record<string, unknown>> | null;
   estimate_type: string;
   estimate_number: string | null;
   sent_at: string | null;
@@ -253,6 +257,11 @@ function EstimateRow({
   onChange: () => void;
   onOpenSendDialog: (id: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  // Only drafts are editable. Sent estimates are locked to prevent the
+  // "bait and switch" risk (customer sees $X in email, vendor edits to $Y,
+  // customer signs $Y). To re-quote, the rep must duplicate and start fresh.
+  const canEdit = !estimate.accepted_at && !estimate.declined_at && !estimate.sent_at;
 
   return (
     <div className="border border-border rounded-md overflow-hidden">
@@ -317,6 +326,15 @@ function EstimateRow({
             >
               <ExternalLink className="w-3 h-3" /> Customer view
             </a>
+            {canEdit && !editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                title="Edit line items"
+              >
+                <Pencil className="w-3 h-3" /> Edit
+              </button>
+            )}
             {!estimate.sent_at && !estimate.accepted_at && (
               <button
                 onClick={() => onOpenSendDialog(estimate.id)}
@@ -354,6 +372,22 @@ function EstimateRow({
                   setShowDeposit(false);
                   onChange();
                 }}
+              />
+            </div>
+          )}
+
+          {editing && canEdit && (
+            <div className="mt-3">
+              <LineItemEditor
+                estimateId={estimate.id}
+                initialItems={coerceLineItems(estimate.charges_json)}
+                initialDiscounts={Number(estimate.discounts) || 0}
+                initialSalesTax={Number(estimate.sales_tax) || 0}
+                onSaved={() => {
+                  setEditing(false);
+                  onChange();
+                }}
+                onCancel={() => setEditing(false)}
               />
             </div>
           )}
@@ -532,4 +566,46 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+/**
+ * Narrow arbitrary `charges_json` JSONB into strictly-typed LineItem[].
+ * Legacy rows may have string-typed numerics or missing labels; this helper
+ * coerces numerics via Number() and drops rows that can't be salvaged.
+ * Replaces the earlier `as unknown as LineItem[]` double-cast.
+ */
+function coerceLineItems(raw: Array<Record<string, unknown>> | null): LineItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: LineItem[] = [];
+  for (const li of raw) {
+    if (!li || typeof li !== "object") continue;
+    const label = typeof li.label === "string" ? li.label : "";
+    if (!label.trim()) continue;
+    const subtotal = Number(li.subtotal);
+    if (!Number.isFinite(subtotal)) continue;
+    const item: LineItem = { label, subtotal };
+    if (typeof li.kind === "string") {
+      const k = li.kind as LineItem["kind"];
+      if (k === "labor" || k === "truck" || k === "material" || k === "packing" || k === "travel" || k === "flat" || k === "mileage") {
+        item.kind = k;
+      }
+    }
+    if (li.rate !== undefined && li.rate !== null) {
+      const n = Number(li.rate);
+      if (Number.isFinite(n)) item.rate = n;
+    }
+    if (li.quantity !== undefined && li.quantity !== null) {
+      const n = Number(li.quantity);
+      if (Number.isFinite(n)) item.quantity = n;
+    }
+    if (typeof li.unit === "string") {
+      const u = li.unit as LineItem["unit"];
+      if (u === "hour" || u === "mile" || u === "cwt" || u === "flat" || u === "each" || u === "day") {
+        item.unit = u;
+      }
+    }
+    if (typeof li.rate_id === "string") item.rate_id = li.rate_id;
+    out.push(item);
+  }
+  return out;
 }
