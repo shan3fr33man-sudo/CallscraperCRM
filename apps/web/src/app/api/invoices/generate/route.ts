@@ -72,7 +72,35 @@ export async function POST(req: Request) {
     }
   }
 
-  const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
+  // Idempotency: if an invoice already exists for this estimate or job,
+  // return it rather than creating a duplicate (protects against double-
+  // clicks in the UI and retries).
+  if (body.estimate_id) {
+    const { data: dup } = await sb
+      .from("invoices")
+      .select("*")
+      .eq("org_id", orgId)
+      .eq("estimate_id", body.estimate_id)
+      .maybeSingle();
+    if (dup) return NextResponse.json({ invoice: dup, existing: true });
+  }
+  if (body.job_id) {
+    const { data: dup } = await sb
+      .from("invoices")
+      .select("*")
+      .eq("org_id", orgId)
+      .eq("job_id", body.job_id)
+      .maybeSingle();
+    if (dup) return NextResponse.json({ invoice: dup, existing: true });
+  }
+
+  // Deterministic invoice_number so retries collide on the UNIQUE constraint
+  // from migration 0006 instead of silently spawning a second invoice.
+  const invoiceNumber = body.estimate_id
+    ? `INV-E${body.estimate_id.slice(0, 8).toUpperCase()}`
+    : body.job_id
+      ? `INV-J${body.job_id.slice(0, 8).toUpperCase()}`
+      : `INV-${Date.now().toString(36).toUpperCase()}`;
 
   const { data: invoice, error: invErr } = await sb
     .from("invoices")
@@ -96,7 +124,31 @@ export async function POST(req: Request) {
     })
     .select("*")
     .single();
-  if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 });
+  if (invErr) {
+    const code = (invErr as { code?: string }).code;
+    if (code === "23505") {
+      // Race: another caller won between our pre-check and this insert.
+      // Look up the winner by the source link (estimate_id or job_id). If
+      // we can't find one, the collision was on invoice_number, which is a
+      // real conflict, not a dedupe.
+      let winQuery = sb
+        .from("invoices")
+        .select("*")
+        .eq("org_id", orgId)
+        .neq("status", "void");
+      if (body.estimate_id) winQuery = winQuery.eq("estimate_id", body.estimate_id);
+      else if (body.job_id) winQuery = winQuery.eq("job_id", body.job_id);
+      else winQuery = winQuery.eq("invoice_number", invoiceNumber);
+      const { data: dup } = await winQuery.maybeSingle();
+      if (dup) return NextResponse.json({ invoice: dup, existing: true });
+      // Fell through: invoice_number collision with an unrelated invoice.
+      return NextResponse.json(
+        { error: "Invoice number conflict; retry with a different source or manual number" },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 });
+  }
 
   await emitEvent(sb, {
     org_id: orgId,

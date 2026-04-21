@@ -226,11 +226,38 @@ async function runAction(
       return;
     }
     case "create_invoice": {
-      // Auto-generate invoice from estimate or job. Triggered by estimate.accepted or job.finished.
+      // Auto-generate invoice from estimate or job. Triggered by
+      // estimate.accepted or job.finished.
+      //
+      // Idempotency: we never want two invoices for the same estimate. We
+      // guard with (a) a cheap pre-check for an existing invoice with the
+      // same estimate_id, and (b) a deterministic invoice_number derived
+      // from the source id so the UNIQUE (org_id, invoice_number) constraint
+      // added in migration 0006 catches any surviving race.
       const estimateId = (p.estimate_id as string) ?? (ev.payload.estimate_id as string) ?? null;
       const jobId = (p.job_id as string) ?? (ev.payload.job_id as string) ?? null;
       const dueInDays = (p.due_in_days as number) ?? 14;
       if (!estimateId && !jobId) return;
+
+      // Pre-check: refuse to create a second invoice for the same source.
+      if (estimateId) {
+        const { data: existing } = await supabase
+          .from("invoices")
+          .select("id")
+          .eq("org_id", ev.org_id)
+          .eq("estimate_id", estimateId)
+          .maybeSingle();
+        if (existing) return; // already invoiced; nothing to do
+      }
+      if (jobId) {
+        const { data: existing } = await supabase
+          .from("invoices")
+          .select("id")
+          .eq("org_id", ev.org_id)
+          .eq("job_id", jobId)
+          .maybeSingle();
+        if (existing) return;
+      }
 
       let lineItems: Array<Record<string, unknown>> = [];
       let subtotal = 0;
@@ -245,22 +272,36 @@ async function runAction(
           .from("estimates")
           .select("*, opportunities(customer_id)")
           .eq("id", estimateId)
+          .eq("org_id", ev.org_id)
           .maybeSingle();
-        if (est) {
-          lineItems = (est.charges_json as Array<Record<string, unknown>> | null) ?? [];
-          subtotal = (est.subtotal as number) ?? 0;
-          discounts = (est.discounts as number) ?? 0;
-          salesTax = (est.sales_tax as number) ?? 0;
-          amountDue = (est.amount as number) ?? 0;
-          opportunityId = (est.opportunity_id as string) ?? opportunityId;
-          customerId =
-            customerId ??
-            ((est as { opportunities?: { customer_id?: string } })?.opportunities?.customer_id ?? null);
+        if (!est) {
+          // Estimate vanished between event emit and action run — rare but
+          // recoverable. Log for observability; automation_runs will record
+          // this action as 'ok' since there's nothing we can do.
+          console.warn("[create_invoice] estimate missing, skipping", { estimateId, org_id: ev.org_id });
+          return;
         }
+        lineItems = (est.charges_json as Array<Record<string, unknown>> | null) ?? [];
+        subtotal = (est.subtotal as number) ?? 0;
+        discounts = (est.discounts as number) ?? 0;
+        salesTax = (est.sales_tax as number) ?? 0;
+        amountDue = (est.amount as number) ?? 0;
+        opportunityId = (est.opportunity_id as string) ?? opportunityId;
+        customerId =
+          customerId ??
+          ((est as { opportunities?: { customer_id?: string } })?.opportunities?.customer_id ?? null);
       }
 
+      if (amountDue <= 0) return; // nothing to invoice
+
+      // Deterministic invoice_number so a retry of the same source estimate
+      // hits the UNIQUE constraint instead of silently creating a dup.
+      const invoiceNumber = estimateId
+        ? `INV-E${estimateId.slice(0, 8).toUpperCase()}`
+        : `INV-J${(jobId ?? "").slice(0, 8).toUpperCase()}`;
+
       const dueDate = new Date(Date.now() + dueInDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const { data: invoice } = await supabase
+      const { data: invoice, error: invErr } = await supabase
         .from("invoices")
         .insert({
           org_id: ev.org_id,
@@ -268,7 +309,7 @@ async function runAction(
           opportunity_id: opportunityId,
           customer_id: customerId,
           estimate_id: estimateId,
-          invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
+          invoice_number: invoiceNumber,
           status: "sent",
           line_items_json: lineItems,
           subtotal,
@@ -282,6 +323,39 @@ async function runAction(
         })
         .select("id, amount_due")
         .single();
+
+      // If we got a UNIQUE violation (23505), we need to know which one.
+      // Migration 0008 adds partial UNIQUE on (org_id, estimate_id) and
+      // (org_id, job_id) for non-void rows — that's the dedupe case and
+      // we treat it as success. If the 23505 was on (org_id, invoice_number)
+      // instead, it means our deterministic number collided with a user-
+      // created invoice — we must NOT silently drop. Re-query to decide.
+      if (invErr) {
+        const code = (invErr as { code?: string }).code;
+        if (code === "23505") {
+          let matchQuery = supabase
+            .from("invoices")
+            .select("id")
+            .eq("org_id", ev.org_id)
+            .neq("status", "void");
+          if (estimateId) matchQuery = matchQuery.eq("estimate_id", estimateId);
+          else if (jobId) matchQuery = matchQuery.eq("job_id", jobId);
+          const { data: matched } = await matchQuery.maybeSingle();
+          if (matched) return; // legit dedupe — invoice already exists for this source
+          // Number-space collision with an unrelated invoice. Log loudly and
+          // throw so the automation_run is marked failed and an operator
+          // investigates. (Extremely rare: requires a first-8-UUID-chars
+          // collision with a manually-entered invoice number.)
+          console.error("[create_invoice] 23505 without matching source-linked invoice", {
+            estimateId,
+            jobId,
+            org_id: ev.org_id,
+            attempted_number: invoiceNumber,
+          });
+          throw new Error("Invoice number collision with unrelated invoice");
+        }
+        throw invErr;
+      }
 
       if (invoice) {
         await emitEvent(supabase, {
