@@ -10,13 +10,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const sb = crmClient();
   const orgId = await getOrgId();
 
+  // Cross-tenant safety: scope the update to this org
   const { data: est, error: eErr } = await sb
     .from("estimates")
     .update({ accepted_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("org_id", orgId)
     .select("*, opportunities(id, customer_id, service_type, service_date, brand, customers(customer_name, customer_phone, customer_email))")
-    .single();
+    .maybeSingle();
   if (eErr) return NextResponse.json({ error: eErr.message }, { status: 500 });
+  if (!est) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const opp = (est as { opportunities?: Record<string, unknown> }).opportunities ?? {};
   const cust = (opp as { customers?: Record<string, unknown> }).customers ?? {};

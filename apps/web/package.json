@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:unit": "node --experimental-strip-types --test src/lib/__tests__/*.test.ts",
+    "seed": "node --experimental-strip-types scripts/seed-demo-data.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",

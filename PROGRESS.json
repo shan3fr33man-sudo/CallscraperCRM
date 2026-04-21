@@ -1,6 +1,6 @@
 {
-  "last_completed_phase": "v1.1-Phase-3",
-  "last_completed_task": "v1.1 Phase 3: invoices + payments rollup + AR dashboard + profitability + QuickBooks CSV + auto-invoice automation",
+  "last_completed_phase": "v1.1-Bulletproofing",
+  "last_completed_task": "Modules 1-5: HMAC tokens, DB integrity, auto-invoice idempotency, zod validation, cross-tenant scope fixes, review package",
   "current_phase": "v1.1-Phase-4",
   "current_task": "Stripe integration: card-on-file, PaymentIntent flow, webhook, refunds",
   "launch_status": "GO",
@@ -10,16 +10,24 @@
     "Phase 4B: /api/webhooks/stripe handler + StripePaymentForm component",
     "Phase 4C: Payment gateway settings UI at /settings/company/payment-gateways"
   ],
-  "test_status": "tsc clean; estimate\u2192invoice\u2192PDF\u2192payment\u2192CSV verified; automation create_invoice fires on estimate.accepted",
+  "test_status": "tsc clean; 10 unit tests on estimate-token; smoke verified estimate->invoice->payment->trigger end-to-end; seed exercises full lifecycle",
   "build_status": "tsc_clean",
-  "last_commit": "v1.1-phase3: invoices + AR dashboard + profitability + QuickBooks CSV + auto-invoice automation",
+  "last_commit": "module-5: review package + cross-tenant [id] route fixes + sign TOCTOU fix",
   "v1_1_phases": {
-    "phase_1": "DONE \u2014 tariff CRUD UI + pure-TS pricing engine + estimate engine integration",
+    "phase_1": "DONE \u2014 tariff CRUD + pricing engine + estimate engine integration",
     "phase_2": "DONE \u2014 estimate types + room inventory + PDF + e-sig + deposit + EstimateTab",
-    "phase_3": "DONE \u2014 invoices + payments rollup + AR dashboard + profitability + QuickBooks CSV + create_invoice automation",
+    "phase_3": "DONE \u2014 invoices + payments rollup + AR dashboard + profitability + QuickBooks CSV",
+    "bulletproofing": "DONE \u2014 HMAC tokens (M1), DB integrity + trigger + invoice unique (M2/M3), zod validation + scope hardening (M4), cross-tenant [id] route fixes + review package (M5)",
     "phase_4": "TODO \u2014 Stripe integration",
-    "phase_5": "TODO \u2014 settings pages buildout (~50 leaves)",
+    "phase_5": "TODO \u2014 settings pages buildout (~50 leaves) + remaining route zod migration",
     "phase_6": "TODO \u2014 15 canned reports + report engine + CSV/PDF export",
     "phase_7": "TODO \u2014 storage, marketing, smart-marketing, payroll, customer portal"
+  },
+  "bulletproofing_modules": {
+    "module_1": "HMAC token auth on public estimate endpoints (2097c5a)",
+    "module_2": "DB integrity layer + payment trigger (28094d1, fixes in 0007/0008)",
+    "module_3": "Auto-invoice idempotency via partial UNIQUE + dedupe (43db99a)",
+    "module_4": "Zod validation on tariff CRUD + cross-org scope (e6898cd)",
+    "module_5": "Cross-tenant [id] route fixes + sign TOCTOU + reviewer package"
   }
 }

@@ -15,9 +15,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (body.ends_at) update.ends_at = body.ends_at;
   if (body.title !== undefined) update.title = body.title;
   if (body.location !== undefined) update.location = body.location;
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  }
 
-  const { data, error } = await sb.from("calendar_events").update(update).eq("id", id).select("*").single();
+  // Cross-tenant safety: scope the update to this org
+  const { data, error } = await sb
+    .from("calendar_events")
+    .update(update)
+    .eq("id", id)
+    .eq("org_id", orgId)
+    .select("*")
+    .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await emitEvent(sb, {
     org_id: orgId,
@@ -33,7 +44,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = crmClient();
-  const { error } = await sb.from("calendar_events").delete().eq("id", id);
+  const orgId = await getOrgId();
+  // Cross-tenant safety: scope delete to this org
+  const { error } = await sb.from("calendar_events").delete().eq("id", id).eq("org_id", orgId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

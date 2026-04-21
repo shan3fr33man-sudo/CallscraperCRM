@@ -49,48 +49,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const sb = crmClient();
 
-  // Atomic race guard: flip accepted_at FIRST, only insert the signature if we
-  // won the race. No orphan rows because we only insert after the update
-  // succeeds. If another request already signed, the update returns no row.
-  const { data: est, error: estErr } = await sb
+  // Look up the estimate up front so we have org_id for the signature row
+  // and can pre-empt the obvious "not found" case.
+  const { data: est } = await sb
     .from("estimates")
-    .update({ accepted_at: new Date().toISOString() })
-    .eq("id", id)
-    .is("accepted_at", null)
     .select("id, org_id, opportunity_id, amount, accepted_at")
+    .eq("id", id)
     .maybeSingle();
-  if (estErr) return NextResponse.json({ error: estErr.message }, { status: 500 });
-  if (!est) {
-    // Either doesn't exist or already signed. Distinguish for clearer error.
-    const { data: existing } = await sb
-      .from("estimates")
-      .select("accepted_at")
-      .eq("id", id)
-      .maybeSingle();
-    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!est) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (est.accepted_at) {
     return NextResponse.json(
-      { error: "Estimate already signed", accepted_at: existing.accepted_at },
+      { error: "Estimate already signed", accepted_at: est.accepted_at },
       { status: 409 },
     );
   }
 
-  // Look up customer_id via a second query (keeping the first query minimal
-  // for the race-critical path)
-  let customerId: string | null = null;
-  if (est.opportunity_id) {
-    const { data: opp } = await sb
-      .from("opportunities")
-      .select("customer_id")
-      .eq("id", est.opportunity_id)
-      .maybeSingle();
-    customerId = (opp?.customer_id as string | null) ?? null;
-  }
-
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 
+  // Race-correct sequence: INSERT first, using the UNIQUE(estimate_id) index
+  // on estimate_signatures (migration 0006) as the authoritative gate. Whoever
+  // wins the unique-constraint race owns the signature. The accepted_at
+  // flip below is then a downstream observation, not the gate — so a parallel
+  // /sign request can never see "accepted but no signature row" (the previous
+  // implementation had that TOCTOU window).
   const { data: sig, error: sigErr } = await sb
     .from("estimate_signatures")
     .insert({
+      org_id: est.org_id,
       estimate_id: id,
       signer_name: body.signer_name,
       signer_email: body.signer_email ?? null,
@@ -100,10 +85,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .select("id")
     .single();
   if (sigErr) {
-    // Signature insert failed AFTER we marked the estimate accepted. Roll back
-    // the acceptance so the state stays consistent.
-    await sb.from("estimates").update({ accepted_at: null }).eq("id", id);
+    if ((sigErr as { code?: string }).code === "23505") {
+      return NextResponse.json({ error: "Estimate already signed" }, { status: 409 });
+    }
     return NextResponse.json({ error: sigErr.message }, { status: 500 });
+  }
+
+  // Flip accepted_at. Race-tolerant: if a parallel request also won an insert
+  // (impossible — UNIQUE prevented it) or got here first, this UPDATE simply
+  // matches no rows and returns null. We don't gate on the result.
+  const acceptedAt = new Date().toISOString();
+  await sb
+    .from("estimates")
+    .update({ accepted_at: acceptedAt })
+    .eq("id", id)
+    .is("accepted_at", null);
+
+  // Customer_id lookup for the event payload (off the race-critical path)
+  let customerId: string | null = null;
+  if (est.opportunity_id) {
+    const { data: opp } = await sb
+      .from("opportunities")
+      .select("customer_id")
+      .eq("id", est.opportunity_id)
+      .maybeSingle();
+    customerId = (opp?.customer_id as string | null) ?? null;
   }
 
   await emitEvent(sb, {
@@ -121,5 +127,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     },
   });
 
-  return NextResponse.json({ ok: true, signature: { id: sig.id }, estimate: est });
+  return NextResponse.json({
+    ok: true,
+    signature: { id: sig.id },
+    estimate: { ...est, accepted_at: acceptedAt },
+  });
 }
