@@ -1,26 +1,26 @@
 {
-  "last_completed_phase": "v1.1-Phase-1",
-  "last_completed_task": "v1.1 Phase 1: tariff system + pricing engine + estimate engine integration",
-  "current_phase": "v1.1-Phase-2",
-  "current_task": "Estimate system overhaul: types, room inventory, PDF, e-sig, deposit, comparison",
+  "last_completed_phase": "v1.1-Phase-2",
+  "last_completed_task": "v1.1 Phase 2: estimate overhaul (types, inventory, PDF, e-sig, deposit, comparison)",
+  "current_phase": "v1.1-Phase-3",
+  "current_task": "Billing & invoicing: invoice CRUD + AR dashboard + profitability + QuickBooks CSV export",
   "launch_status": "GO",
   "blockers": [],
   "next_3_tasks": [
-    "Phase 2A: Add estimate_type support to estimate flow + UI",
-    "Phase 2B: Build room-based inventory editor (InventoryEditor component + API)",
-    "Phase 2C: PDF generation for estimates (react-pdf/renderer)"
+    "Phase 3A: Invoice API routes (CRUD + payments + PDF + send + auto-generate)",
+    "Phase 3B: Accounts receivable dashboard at /accounting/receivables",
+    "Phase 3C: Job profitability page (estimate vs actual vs invoice)"
   ],
-  "test_status": "tsc clean; preview API verified end-to-end ($7135.13 calc on APM Saturday move)",
+  "test_status": "tsc clean; PDF route 200 OK; sign/view/send/inventory/payments verified end-to-end",
   "build_status": "tsc_clean",
-  "last_commit": "v1.1-phase1: tariff library + pricing engine + estimate wiring",
+  "last_commit": "v1.1-phase2: estimate overhaul (types + inventory + PDF + e-sig + deposit)",
   "v1_1_phases": {
-    "phase_1": "DONE — tariff CRUD UI + pure-TS pricing engine + estimate engine integration",
-    "phase_2": "TODO — estimate types, room inventory, PDF, e-sig, deposit, comparison",
-    "phase_3": "TODO — invoices, payments, AR dashboard, profitability, QuickBooks CSV",
-    "phase_4": "TODO — Stripe integration",
-    "phase_5": "TODO — settings pages buildout (~50 leaves)",
-    "phase_6": "TODO — 15 canned reports + report engine + CSV/PDF export",
-    "phase_7": "TODO — storage, marketing, smart-marketing, payroll, customer portal"
+    "phase_1": "DONE \u2014 tariff CRUD UI + pure-TS pricing engine + estimate engine integration",
+    "phase_2": "DONE \u2014 estimate types, room inventory editor, PDF generation, send via email/sms, public estimate view, e-signature, deposit collection, EstimateTab on customer detail",
+    "phase_3": "TODO \u2014 invoices, payments rollup, AR dashboard, profitability, QuickBooks CSV",
+    "phase_4": "TODO \u2014 Stripe integration",
+    "phase_5": "TODO \u2014 settings pages buildout (~50 leaves)",
+    "phase_6": "TODO \u2014 15 canned reports + report engine + CSV/PDF export",
+    "phase_7": "TODO \u2014 storage, marketing, smart-marketing, payroll, customer portal"
   },
   "launch_phases": {
     "L1": "auth helpers + middleware + login/signup + onboard",

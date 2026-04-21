@@ -1,6 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
+import { EstimateTab } from "@/components/EstimateTab";
 
 type Customer = Record<string, unknown> & { id: string };
 type Row = Record<string, unknown> & { id: string };
@@ -227,7 +228,20 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               {tab === "Estimate" && (
                 <div className="space-y-3">
                   <DraftEstimateButton opportunityId={String(opps[0]?.id ?? "")} />
-                  <RowList rows={opps.filter((o) => o.amount)} columns={["service_type", "service_date", "amount", "status"]} empty="No estimates drafted." />
+                  <EstimateTab
+                    customerId={id}
+                    opportunities={opps.map((o) => ({
+                      id: o.id,
+                      service_type: (o.service_type as string | null) ?? null,
+                      service_date: (o.service_date as string | null) ?? null,
+                      amount: (o.amount as number | null) ?? null,
+                      status: (o.status as string | null) ?? null,
+                      move_type: (o.move_type as string | null) ?? null,
+                      branch_id: (o.branch_id as string | null) ?? null,
+                      origin_json: (o.origin_json as Record<string, unknown> | null) ?? null,
+                      destination_json: (o.destination_json as Record<string, unknown> | null) ?? null,
+                    }))}
+                  />
                 </div>
               )}
               {tab === "Storage" && <div className="text-xs text-muted-foreground">No storage accounts.</div>}
