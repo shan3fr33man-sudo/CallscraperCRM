@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
+import { ErrorBanner } from "@/components/ui";
 
 type Call = {
   id: string;
@@ -30,15 +31,27 @@ export default function SalesCommandCenter() {
   const [calls, setCalls] = useState<Call[]>([]);
   const [opps, setOpps] = useState<Opp[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const [cr, or] = await Promise.all([
-      fetch("/api/calls/recent").then((r) => r.json()).catch(() => ({ calls: [] })),
-      fetch("/api/opportunities").then((r) => r.json()).catch(() => ({ opportunities: [] })),
-    ]);
-    setCalls(cr.calls ?? []);
-    setOpps(or.opportunities ?? []);
-    setLoading(false);
+    setError(null);
+    try {
+      const [cr, or] = await Promise.all([
+        fetch("/api/calls/recent").then((r) => r.json()),
+        fetch("/api/opportunities").then((r) => r.json()),
+      ]);
+      // Still allow partial success on one side — surface only if both fail
+      if (cr.error && or.error) {
+        setError(`${cr.error}; ${or.error}`);
+      } else {
+        setCalls(cr.calls ?? []);
+        setOpps(or.opportunities ?? []);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load sales data");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -95,7 +108,13 @@ export default function SalesCommandCenter() {
   return (
     <div>
       <TopBar title="Sales Command Center" />
-      <div className="p-5 grid grid-cols-3 gap-4">
+      <div className="p-5">
+        {error ? (
+          <div className="mb-4">
+            <ErrorBanner message={error} onRetry={load} />
+          </div>
+        ) : null}
+        <div className="grid grid-cols-3 gap-4">
         {/* LEFT: Live calls */}
         <div className="border border-border rounded-lg bg-background overflow-hidden">
           <div className="px-4 py-2 border-b border-border flex items-center justify-between">
@@ -162,6 +181,7 @@ export default function SalesCommandCenter() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

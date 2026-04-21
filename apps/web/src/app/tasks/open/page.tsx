@@ -2,6 +2,8 @@
 import { TopBar } from "@/components/TopBar";
 import { EntityTable, type Row } from "@/components/EntityTable";
 import { NewButton } from "@/components/NewButton";
+import { EmptyState } from "@/components/ui";
+import { CheckSquare } from "lucide-react";
 
 async function complete(id: string) {
   await fetch(`/api/tasks/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "completed" }) });
@@ -29,7 +31,14 @@ export default function OpenTasksPage() {
             { key: "id", label: "", render: (r) => <button onClick={(e) => { e.stopPropagation(); complete(r.id as string); }} className="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button> },
           ]}
           actions={<NewButton kind="task" />}
-          emptyMessage="No open tasks."
+          empty={
+            <EmptyState
+              icon={<CheckSquare className="w-6 h-6" />}
+              title="No open tasks"
+              description="Tasks created from automations or the + New menu will appear here."
+              action={<NewButton kind="task" />}
+            />
+          }
         />
       </div>
     </div>

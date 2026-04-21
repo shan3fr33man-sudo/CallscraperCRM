@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DollarSign, AlertCircle, CheckCircle, Send, FileText } from "lucide-react";
+import { EmptyState } from "@/components/ui";
 
 type Invoice = {
   id: string;
@@ -185,8 +186,19 @@ export default function AccountsReceivablePage() {
               ))}
             {!loading && visible.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center text-xs text-muted-foreground py-8">
-                  No invoices match the current filters.
+                <td colSpan={9} className="px-3 py-6">
+                  {(filterStatus || filterAge) ? (
+                    <div className="text-center text-xs text-muted-foreground">
+                      No invoices match the current filters.
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={<DollarSign className="w-6 h-6" />}
+                      title="No invoices yet"
+                      description="Invoices auto-generate when a customer signs an estimate. Drafts and overdue balances will appear here."
+                      compact
+                    />
+                  )}
                 </td>
               </tr>
             )}

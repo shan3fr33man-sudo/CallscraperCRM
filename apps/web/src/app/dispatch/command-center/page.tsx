@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
+import { EmptyState, ErrorBanner } from "@/components/ui";
+import { Truck } from "lucide-react";
 
 type Job = Record<string, unknown> & { id: string };
 
@@ -22,14 +24,25 @@ function todayISO() {
 export default function DispatchCommandCenter() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   async function load() {
     setLoading(true);
-    const r = await fetch(`/api/jobs?date=${todayISO()}`);
-    const j = await r.json();
-    setJobs(j.jobs ?? []);
-    setLoading(false);
+    setError(null);
+    try {
+      const r = await fetch(`/api/jobs?date=${todayISO()}`);
+      const j = await r.json();
+      if (j.error) {
+        setError(j.error);
+      } else {
+        setJobs(j.jobs ?? []);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load today's jobs");
+    } finally {
+      setLoading(false);
+    }
   }
   useEffect(() => { load(); }, []);
 
@@ -68,6 +81,7 @@ export default function DispatchCommandCenter() {
     <div>
       <TopBar title="Dispatch Command Center" />
       <div className="p-5 space-y-4">
+        {error ? <ErrorBanner message={error} onRetry={load} /> : null}
         {/* Status strip */}
         <div className="grid grid-cols-5 gap-3">
           {counts.map((c) => (
@@ -95,7 +109,22 @@ export default function DispatchCommandCenter() {
           {loading ? (
             <div className="p-4 text-xs text-muted-foreground">Loading…</div>
           ) : jobs.length === 0 ? (
-            <div className="p-4 text-xs text-muted-foreground">No jobs scheduled today. Bookings will appear here.</div>
+            <div className="p-4">
+              <EmptyState
+                icon={<Truck className="w-6 h-6" />}
+                title="No jobs scheduled today"
+                description="Accepted estimates auto-generate jobs on their service date. Point customers at pending estimates to keep this board full."
+                action={
+                  <a
+                    href="/sales/new-leads"
+                    className="inline-flex items-center gap-1 text-sm bg-accent text-white px-3 py-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    Open new leads
+                  </a>
+                }
+                compact
+              />
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {jobs.map((j) => {

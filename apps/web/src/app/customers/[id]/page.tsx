@@ -2,6 +2,7 @@
 import { use, useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { EstimateTab } from "@/components/EstimateTab";
+import { ErrorBanner } from "@/components/ui";
 
 type Customer = Record<string, unknown> & { id: string };
 type Row = Record<string, unknown> & { id: string };
@@ -51,19 +52,33 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<Customer>>({});
 
+  // Sub-panel failures (opportunities, jobs, claims, activities) fall back
+  // to empty lists so one failed panel doesn't blank the whole detail page.
+  // The primary customer fetch surfaces its error via the top-of-page banner
+  // so the user knows the page itself failed to load.
+  const [loadError, setLoadError] = useState<string | null>(null);
   async function loadAll() {
-    const [c, o, j, cl, a] = await Promise.all([
-      fetch(`/api/customers/${id}`).then((r) => r.json()),
-      fetch(`/api/opportunities?customer_id=${id}`).then((r) => r.json()).catch(() => ({ opportunities: [] })),
-      fetch(`/api/jobs?customer_id=${id}`).then((r) => r.json()).catch(() => ({ jobs: [] })),
-      fetch(`/api/claims?customer_id=${id}`).then((r) => r.json()).catch(() => ({ claims: [] })),
-      fetch(`/api/activities?customer_id=${id}`).then((r) => r.json()).catch(() => ({ activities: [] })),
-    ]);
-    setCustomer(c.customer ?? null);
-    setOpps(o.opportunities ?? []);
-    setJobs(j.jobs ?? []);
-    setClaims(cl.claims ?? []);
-    setActivities(a.activities ?? []);
+    setLoadError(null);
+    try {
+      const c = await fetch(`/api/customers/${id}`).then((r) => r.json());
+      if (c.error) {
+        setLoadError(c.error);
+        return;
+      }
+      setCustomer(c.customer ?? null);
+      const [o, j, cl, a] = await Promise.all([
+        fetch(`/api/opportunities?customer_id=${id}`).then((r) => r.json()).catch(() => ({ opportunities: [] })),
+        fetch(`/api/jobs?customer_id=${id}`).then((r) => r.json()).catch(() => ({ jobs: [] })),
+        fetch(`/api/claims?customer_id=${id}`).then((r) => r.json()).catch(() => ({ claims: [] })),
+        fetch(`/api/activities?customer_id=${id}`).then((r) => r.json()).catch(() => ({ activities: [] })),
+      ]);
+      setOpps(o.opportunities ?? []);
+      setJobs(j.jobs ?? []);
+      setClaims(cl.claims ?? []);
+      setActivities(a.activities ?? []);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Failed to load customer");
+    }
   }
   useEffect(() => { loadAll(); }, [id]);
 
@@ -111,6 +126,11 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           record_name: String(customer?.customer_name ?? ""),
         }}
       />
+      {loadError ? (
+        <div className="p-5 pb-0">
+          <ErrorBanner message={loadError} onRetry={loadAll} />
+        </div>
+      ) : null}
       <div className="p-5 grid grid-cols-3 gap-5">
         {/* LEFT PANEL */}
         <div className="col-span-1 space-y-4">
