@@ -4,12 +4,13 @@
 //   estimate                            (added in F4)
 //   crew_confirmation                   (added in F4)
 //   ticket                              (added in F4)
+//   customer                            (added in +C — standalone Create Customer)
 // Field types: text, number, date, datetime, select, remote_select,
 //   customer_autocomplete (F3), textarea (F4), checkbox (F4), line_items (F4)
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export type FormKind = "opportunity" | "lead" | "task" | "follow_up" | "estimate" | "crew_confirmation" | "ticket";
+export type FormKind = "opportunity" | "lead" | "task" | "follow_up" | "estimate" | "crew_confirmation" | "ticket" | "customer";
 
 type Field =
   | { key: string; label: string; type: "text" | "number" | "date" | "datetime" | "textarea" | "phone"; required?: boolean; min?: number; max?: number; minLength?: number }
@@ -83,6 +84,20 @@ const TICKET_FIELDS: Field[] = [
   { key: "assigned_to", label: "Assigned to", type: "text" },
 ];
 
+const BRANDS = ["APM", "AFM", "crewready", "apex", "other"].map((v) => ({ value: v, label: v }));
+
+// Standalone Create Customer form — used for walk-ins, referrals, or any
+// path where a customer record needs to exist before an opportunity is
+// drafted. Mirrors the `customers` table schema (customer_name/phone/email,
+// brand, source) so the POST body maps 1:1 without transformation.
+const CUSTOMER_FIELDS: Field[] = [
+  { key: "customer_name", label: "Full name", type: "text", required: true, minLength: 2 },
+  { key: "customer_phone", label: "Phone", type: "phone" },
+  { key: "customer_email", label: "Email", type: "text" },
+  { key: "brand", label: "Brand", type: "select", options: BRANDS },
+  { key: "source", label: "Source", type: "select", options: SOURCES },
+];
+
 function configFor(kind: FormKind): { title: string; fields: Field[] } {
   if (kind === "opportunity") return { title: "New Opportunity", fields: OPP_FIELDS };
   if (kind === "lead") return { title: "New Lead", fields: [...OPP_FIELDS, { key: "run_triage", label: "Run Lead Triage after create", type: "checkbox" }] };
@@ -90,6 +105,7 @@ function configFor(kind: FormKind): { title: string; fields: Field[] } {
   if (kind === "follow_up") return { title: "New Follow-up", fields: FOLLOWUP_FIELDS };
   if (kind === "estimate") return { title: "New Estimate", fields: ESTIMATE_FIELDS };
   if (kind === "crew_confirmation") return { title: "Crew Confirmation", fields: CREW_CONFIRMATION_FIELDS };
+  if (kind === "customer") return { title: "New Customer", fields: CUSTOMER_FIELDS };
   return { title: "New Ticket", fields: TICKET_FIELDS };
 }
 
@@ -299,6 +315,30 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
         if (!r.ok) throw new Error((await r.json()).error ?? "failed");
         onClose();
         router.push("/customer-service/tickets/active");
+        return;
+      } else if (kind === "customer") {
+        const r = await fetch("/api/customers", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            customer_name: values.customer_name,
+            customer_phone: values.customer_phone || null,
+            customer_email: values.customer_email || null,
+            brand: values.brand || null,
+            source: values.source || null,
+            status: "new",
+          }),
+        });
+        if (!r.ok) throw new Error((await r.json()).error ?? "failed");
+        const cj = await r.json();
+        onClose();
+        // Jump into the new customer's detail page so the user can
+        // immediately add notes, schedule a follow-up, or start an estimate.
+        if (cj.customer?.id) {
+          router.push(`/customers/${cj.customer.id}`);
+        } else {
+          router.push("/customers/all-profiles");
+        }
         return;
       }
       onClose();

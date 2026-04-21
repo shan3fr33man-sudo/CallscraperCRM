@@ -6,6 +6,7 @@ import { RecordForm, type FormKind } from "./RecordForm";
 const OPTIONS: { kind: FormKind; label: string; shortcut?: string }[] = [
   { kind: "opportunity", label: "New Opportunity", shortcut: "O" },
   { kind: "lead", label: "New Lead" },
+  { kind: "customer", label: "New Customer", shortcut: "C" },
   { kind: "task", label: "New Task", shortcut: "T" },
   { kind: "follow_up", label: "New Follow-up" },
   { kind: "estimate", label: "New Estimate", shortcut: "E" },
@@ -23,6 +24,7 @@ export function NewMenu() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "n" || e.key === "N") { setOpen(true); e.preventDefault(); }
       else if (e.key === "o" || e.key === "O") { setForm("opportunity"); e.preventDefault(); }
+      else if (e.key === "c" || e.key === "C") { setForm("customer"); e.preventDefault(); }
       else if (e.key === "t" || e.key === "T") { setForm("task"); e.preventDefault(); }
       else if (e.key === "e" || e.key === "E") { setForm("estimate"); e.preventDefault(); }
     }
