@@ -20,6 +20,12 @@ export const runtime = "nodejs";
  *     tab uses this — no token needed).
  *  2. Public: valid HMAC token bound to this estimate id (issued by /send;
  *     embedded in the customer-facing /estimate/[id] page link).
+ *
+ * Cross-org safety: estimate IDs are UUIDs (globally unique across all orgs).
+ * The token path fetches by id only because (a) the token itself binds id to
+ * a specific estimate, (b) no two orgs can collide on UUID, and (c) RLS with
+ * service-role bypass applies. If id space ever becomes non-globally-unique,
+ * add an org-id claim to the token and verify it here.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
