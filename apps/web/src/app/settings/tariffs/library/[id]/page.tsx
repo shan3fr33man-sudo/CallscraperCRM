@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Trash2, Plus } from "lucide-react";
 import { TariffRateEditor } from "@/components/TariffRateEditor";
 import { TariffModifierEditor } from "@/components/TariffModifierEditor";
 import { PricingPreview } from "@/components/PricingPreview";
+import { TariffResolverPreview } from "@/components/TariffResolverPreview";
 
 type Tier = { id: string; threshold: number; rate: number };
 type Rate = {
@@ -65,20 +66,29 @@ type FullTariff = {
 
 type Branch = { id: string; name: string; brand_code: string };
 
+type ServiceTypeOption = { value: string; label: string };
+
 export default function TariffEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [tariff, setTariff] = useState<FullTariff | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceTypeOption[]>([]);
   const [saving, setSaving] = useState(false);
 
   async function reload() {
-    const [tRes, bRes] = await Promise.all([
+    const [tRes, bRes, sRes] = await Promise.all([
       fetch(`/api/tariffs/${id}`).then((r) => r.json()),
       fetch("/api/branches").then((r) => r.json()),
+      // Service types come from the new /settings/estimates/service-types
+      // catalog (F6). No cache so edits there reflect immediately here.
+      fetch("/api/settings/estimates", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : { settings: [] })),
     ]);
     setTariff(tRes.tariff);
     setBranches(bRes.branches ?? []);
+    const svc = (sRes.settings ?? []).find((s: { key: string }) => s.key === "service_types");
+    setServiceTypes(Array.isArray(svc?.value) ? svc.value : []);
   }
 
   useEffect(() => {
@@ -168,12 +178,11 @@ export default function TariffEditorPage({ params }: { params: Promise<{ id: str
                 className="text-sm border border-border rounded-md px-3 py-1.5 bg-background w-full"
               >
                 <option value="">— Any —</option>
-                <option value="local_move">Local Move</option>
-                <option value="long_distance">Long Distance</option>
-                <option value="commercial">Commercial</option>
-                <option value="labor_only">Labor Only</option>
-                <option value="packing">Packing</option>
-                <option value="storage">Storage</option>
+                {serviceTypes.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Effective from">
@@ -245,6 +254,13 @@ export default function TariffEditorPage({ params }: { params: Promise<{ id: str
               branches={branches}
               onChange={reload}
             />
+          </Section>
+
+          {/* Resolver preview — live "which tariff wins?" check so a user
+              editing assignments knows immediately whether their changes
+              made this tariff take priority. */}
+          <Section title="Resolver Preview">
+            <TariffResolverPreview currentTariffId={id} branches={branches} />
           </Section>
         </div>
       </div>
