@@ -98,6 +98,33 @@ Format: `[status] [severity] [module] description — action`
   Sprint retrospective asserts none of the "open" entries is a real
   regression before the sprint is declared complete.
 
+### F3 review deferrals (commit 7c0610c → next)
+
+- **open** MAJOR (F3) `jobs` table has no `assigned_to` column, so the
+  planned "Assigned-to dropdown" on the dispatch command center was omitted
+  from F3. Adding it requires a migration + API whitelist update + UI control.
+  Action: in the v1.1 follow-up or Phase 5, migrate `alter table jobs add
+  column assigned_to uuid references users_profiles(user_id)`, add to
+  ALLOWED_FIELDS on `/api/jobs/[id]`, and extend CrewPicker with an
+  assignee select that reads from `/api/users`.
+
+- **open** MAJOR (F3) Stale-data race: if dispatcher A opens the crew
+  picker and dispatcher B advances the same job via `load()` triggered by
+  a status change or poll, dispatcher A's in-progress edits silently
+  overwrite B's change on save (last-write-wins). The `key={job.id}`
+  mount pattern prevents stale DISPLAY but not the save conflict.
+  Action: return updated crew_size/truck_ids from `/api/jobs/[id]` PATCH
+  and compare against initial snapshot; if the server state drifted, show
+  a "Job updated by another dispatcher — review and retry" banner. Add
+  versioning (updated_at) for optimistic concurrency in a dedicated sprint.
+
+- **open** MINOR (F3) `crew_size` has no DB CHECK constraint; client clamps
+  to 0–20 but a forged request can set 99999.
+  Action: in migration 0010, `alter table jobs add constraint
+  jobs_crew_size_ck check (crew_size is null or (crew_size >= 0 and
+  crew_size <= 50))`. Same pattern for any other numeric fields that take
+  direct client input.
+
 ## Closed (historical, for reference)
 
 _Entries move here with the commit SHA that addressed them._
