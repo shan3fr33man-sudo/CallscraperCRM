@@ -72,6 +72,11 @@ export async function GET(req: Request) {
   const branchId = url.searchParams.get("branch_id");
   const ownerId = url.searchParams.get("owner_id");
   const eventType = url.searchParams.get("event_type");
+  // `related_type` is used by the Follow-ups calendar to narrow to
+  // task-linked office events ("/calendars/follow-ups"). The fleet of
+  // non-follow-up office events (e.g. surveys, box deliveries) does NOT
+  // have related_type="task", so this filter cleanly separates them.
+  const relatedType = url.searchParams.get("related_type");
   const start = url.searchParams.get("start");
   const end = url.searchParams.get("end");
 
@@ -82,6 +87,7 @@ export async function GET(req: Request) {
   if (branchId) q = q.eq("branch_id", branchId);
   if (ownerId) q = q.eq("owner_id", ownerId);
   if (eventType) q = q.eq("event_type", eventType);
+  if (relatedType) q = q.eq("related_type", relatedType);
   if (start) q = q.gte("starts_at", start);
   if (end) q = q.lte("starts_at", end);
 

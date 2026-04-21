@@ -212,9 +212,23 @@ export function RecordForm({ kind, onClose, prefill }: { kind: FormKind; onClose
         if (values.due_at) {
           const start = new Date(values.due_at);
           const end = new Date(start.getTime() + 30 * 60_000);
+          // Mirror the task's assigned_to onto the paired calendar event's
+          // owner_id so /calendars/{mine,team} can filter by "this person's"
+          // events without a join. When assigned_to is null (current default
+          // for follow-ups), owner_id stays null too and the event still
+          // appears on the team calendar — just not under any specific user.
           await fetch("/api/calendar-events", {
             method: "POST", headers: { "content-type": "application/json" },
-            body: JSON.stringify({ kind: "office", event_type: "other", title: values.title, starts_at: start.toISOString(), ends_at: end.toISOString(), related_type: "task", related_id: tj.task?.id }),
+            body: JSON.stringify({
+              kind: "office",
+              event_type: "other",
+              title: values.title,
+              starts_at: start.toISOString(),
+              ends_at: end.toISOString(),
+              related_type: "task",
+              related_id: tj.task?.id,
+              owner_id: tj.task?.assigned_to ?? null,
+            }),
           }).catch((e) => console.error("calendar-events follow-up step 2 failed:", e));
         }
         onClose();

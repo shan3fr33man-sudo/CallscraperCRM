@@ -1,24 +1,41 @@
 {
-  "last_completed_phase": "v1.1-Bulletproofing",
-  "last_completed_task": "Modules 1-5: HMAC tokens, DB integrity, auto-invoice idempotency, zod validation, cross-tenant scope fixes, review package",
-  "current_phase": "v1.1-Phase-4",
-  "current_task": "Stripe integration: card-on-file, PaymentIntent flow, webhook, refunds",
+  "last_completed_phase": "v1.1-Phase-3.5-Polish",
+  "last_completed_task": "D2: public estimate polish (Referrer-Policy header, field-keyed errors, aria-live progress, SignatureCanvas a11y)",
+  "current_phase": "v1.1-Phase-3.5-Polish",
+  "current_task": "F2: calendar views for team / mine / follow-ups",
   "launch_status": "GO",
   "blockers": [],
+  "phase_3_5_queue": {
+    "D1": "DONE (b14b503) \u2014 design tokens + 6 UI primitives",
+    "F1": "DONE (2fac503) \u2014 Send Estimate dialog with to_email/to_phone overrides",
+    "D3": "DONE (d23dcb1) \u2014 empty/error states across high-traffic lists + EntityTable slot",
+    "I1": "DONE (4b510d0) \u2014 auth bridge (v1b HMAC) + migration 0009 + INTEGRATION.md + /launch deep link + JWT tests",
+    "F4": "DONE (4764935) \u2014 invoice detail page + PaymentRecorder + SendInvoiceDialog + keyboard-navigable AR rows",
+    "F5": "DONE (94ad517) \u2014 estimate PATCH + InlineEditableTable primitive + LineItemEditor + status gates",
+    "D2": "DONE (9bac45c) \u2014 public estimate: HTTP Referrer-Policy + noindex + semantic HTML + field-keyed errors + SignatureCanvas a11y",
+    "F2": "IN PROGRESS \u2014 /calendars/team + /mine + /follow-ups",
+    "F3": "PENDING \u2014 crew picker on dispatch command center",
+    "F6": "PENDING \u2014 opportunity-types + service-types settings",
+    "+C": "PENDING \u2014 Create-a-Customer standalone form",
+    "+S": "PENDING \u2014 search bars on /customers/all-profiles + /customer-service/tickets/active",
+    "retro": "PENDING \u2014 sprint retrospective + BLOCKERS close-out + regenerate ROUTE_INVENTORY.md"
+  },
   "next_3_tasks": [
-    "Phase 4A: Stripe lib + /api/payments/create-intent + /api/payments/confirm",
-    "Phase 4B: /api/webhooks/stripe handler + StripePaymentForm component",
-    "Phase 4C: Payment gateway settings UI at /settings/company/payment-gateways"
+    "F2: ship /calendars/{team,mine,follow-ups} by querying calendar_events with scoped filters; reuse existing CalendarView + EventDetailDrawer",
+    "F3: crew-size stepper + truck multiselect + assigned-to dropdown popover per job row on /dispatch/command-center",
+    "F6: /settings/tariffs/opportunity-types + /settings/estimates/service-types (both use SettingsListEditor + live resolve badge)"
   ],
-  "test_status": "tsc clean; 10 unit tests on estimate-token; smoke verified estimate->invoice->payment->trigger end-to-end; seed exercises full lifecycle",
+  "test_status": "tsc clean; vocab clean; 20 unit tests on auth-bridge + 10 on estimate-token passing; seed exercises full lifecycle",
   "build_status": "tsc_clean",
-  "last_commit": "module-5: review package + cross-tenant [id] route fixes + sign TOCTOU fix",
+  "last_commit": "9bac45c D2: public estimate polish (a11y, focus rings, referrer-policy)",
   "v1_1_phases": {
     "phase_1": "DONE \u2014 tariff CRUD + pricing engine + estimate engine integration",
     "phase_2": "DONE \u2014 estimate types + room inventory + PDF + e-sig + deposit + EstimateTab",
     "phase_3": "DONE \u2014 invoices + payments rollup + AR dashboard + profitability + QuickBooks CSV",
-    "bulletproofing": "DONE \u2014 HMAC tokens (M1), DB integrity + trigger + invoice unique (M2/M3), zod validation + scope hardening (M4), cross-tenant [id] route fixes + review package (M5)",
-    "phase_4": "TODO \u2014 Stripe integration",
+    "bulletproofing": "DONE \u2014 M1 HMAC tokens, M2/M3 DB integrity + trigger + invoice unique, M4 zod/scope, M5 [id] routes + review package",
+    "phase_3_5": "IN PROGRESS \u2014 D1/F1/D3/I1/F4/F5/D2 committed; F2/F3/F6/+C/+S pending",
+    "integration_sprint": "TODO \u2014 shared top-bar with callscraper.com, Nginx reverse-proxy, dashboard integration, E2E with Ken",
+    "phase_4": "TODO (LAST) \u2014 Stripe card-on-file + PaymentIntent + webhook + refunds",
     "phase_5": "TODO \u2014 settings pages buildout (~50 leaves) + remaining route zod migration",
     "phase_6": "TODO \u2014 15 canned reports + report engine + CSV/PDF export",
     "phase_7": "TODO \u2014 storage, marketing, smart-marketing, payroll, customer portal"
@@ -28,6 +45,6 @@
     "module_2": "DB integrity layer + payment trigger (28094d1, fixes in 0007/0008)",
     "module_3": "Auto-invoice idempotency via partial UNIQUE + dedupe (43db99a)",
     "module_4": "Zod validation on tariff CRUD + cross-org scope (e6898cd)",
-    "module_5": "Cross-tenant [id] route fixes + sign TOCTOU + reviewer package"
+    "module_5": "Cross-tenant [id] route fixes + sign TOCTOU + reviewer package (49fc91f)"
   }
 }
