@@ -1,18 +1,27 @@
 {
-  "last_completed_phase": "Launch",
-  "last_completed_task": "L6 Playwright smoke suite + HANDOFF.md rewrite as Day 1 Operations guide",
-  "current_phase": "GO-LIVE",
-  "current_task": "Deploy to Vercel and run SYNC_VERIFICATION.md",
+  "last_completed_phase": "v1.1-Phase-1",
+  "last_completed_task": "v1.1 Phase 1: tariff system + pricing engine + estimate engine integration",
+  "current_phase": "v1.1-Phase-2",
+  "current_task": "Estimate system overhaul: types, room inventory, PDF, e-sig, deposit, comparison",
   "launch_status": "GO",
   "blockers": [],
   "next_3_tasks": [
-    "Push main to GitHub and import into Vercel",
-    "Set env vars per .env.production.example and trigger first deploy",
-    "Run SYNC_VERIFICATION.md against the live deploy"
+    "Phase 2A: Add estimate_type support to estimate flow + UI",
+    "Phase 2B: Build room-based inventory editor (InventoryEditor component + API)",
+    "Phase 2C: PDF generation for estimates (react-pdf/renderer)"
   ],
-  "test_status": "tsc clean; production next build clean; playwright suite staged",
-  "build_status": "tsc_clean; next_build_clean",
-  "last_commit": "launch-L6: Playwright smoke suite for public + app routes [tsc: clean]",
+  "test_status": "tsc clean; preview API verified end-to-end ($7135.13 calc on APM Saturday move)",
+  "build_status": "tsc_clean",
+  "last_commit": "v1.1-phase1: tariff library + pricing engine + estimate wiring",
+  "v1_1_phases": {
+    "phase_1": "DONE — tariff CRUD UI + pure-TS pricing engine + estimate engine integration",
+    "phase_2": "TODO — estimate types, room inventory, PDF, e-sig, deposit, comparison",
+    "phase_3": "TODO — invoices, payments, AR dashboard, profitability, QuickBooks CSV",
+    "phase_4": "TODO — Stripe integration",
+    "phase_5": "TODO — settings pages buildout (~50 leaves)",
+    "phase_6": "TODO — 15 canned reports + report engine + CSV/PDF export",
+    "phase_7": "TODO — storage, marketing, smart-marketing, payroll, customer portal"
+  },
   "launch_phases": {
     "L1": "auth helpers + middleware + login/signup + onboard",
     "L2": "real RLS tenant isolation via get_my_org_id() on 35+ tables",
