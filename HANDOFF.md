@@ -1,6 +1,19 @@
 # CallscraperCRM — Day 1 Operations
 
-Status: **GO** (Phases A–H + Launch L1–L6 complete)
+Status: **GO** (Phases A–H + Launch L1–L6 + v1.1 Phase 3.5 Polish complete)
+
+**Latest sprint**: v1.1 Phase 3.5 shipped 2026-04-21 (12 modules, commits
+`b14b503` → `4964163`). Retrospective: `4964163`. See `PROGRESS.json` for
+commit SHAs and `BLOCKERS.md` for deferred work.
+
+**Current state**: feature-live but pre-integration with callscraper.com.
+Integration Sprint (M1–M5) is the next work block. Designer handoff for
+callscraper.com's designer is at `docs/DESIGNER_HANDOFF.md` — hand it over
+before Integration Sprint M1 starts.
+
+**Plan file**: `C:\Users\shane\.claude\plans\pure-tumbling-crown.md` — the
+forward roadmap (Integration Sprint → Phase 5 Settings buildout → Phase 4
+Stripe, in that order per user directive).
 
 ## 1. Production URLs
 
@@ -66,15 +79,59 @@ VALUES ('<org-uuid>', '<user-uuid>', 'owner');
 
 **Cron not firing** → confirm Vercel project is on a plan that supports cron jobs; check Vercel → Cron Jobs tab for last-run status.
 
-## 6. What Remains (v1.1)
+## 6. What Remains (v1.1+)
 
-- **CallScraper REST API adapter** — typed client at `lib/callscraper-rest.ts` is ready to connect; Ken needs to build the `/api/v1/*` endpoints on callscraper.com. Store your API key at Settings → Integrations → API Keys (provider: callscraper) or set `CALLSCRAPER_API_KEY` env var. Test endpoint: `GET /api/sync/callscraper/test-rest`.
-- Twilio voice + SMS webhook wiring (schema ready; adapter interface in `packages/integrations`)
-- LiveSwitch + QuoteSheets video inventory adapters
-- CSV import parser body (route scaffold exists at `/settings/integrations/import`)
-- Real-time callscraper webhook path (cron covers v1)
-- Drag-to-reschedule on resource calendar
-- Stripe + Authorize.net payment adapters
+### Next sprint: Integration Sprint (M1–M5, ~60h)
+
+Ship callscraper.com ↔ CRM cross-product polish so the two feel like one
+product. See plan file Part 3.1 for detail.
+
+- **M1 Shared TopBar embed** — extract `TopBar` into an iframe-mountable
+  route at `/embed/topbar`; Ken embeds on callscraper.com via the
+  reverse-proxy.
+- **M2 Nginx reverse-proxy + cookie contract** — finalize the proxy config,
+  add a dev docker-compose, set `Domain=.callscraper.com` cookie in prod.
+- **M3 Unified dashboard** — 6-tile cross-product dashboard (live
+  callscraper metrics + CRM pipeline metrics).
+- **M4 Session auto-mint + `jti` denylist + org chooser** — extend `/launch`
+  to mint a Supabase session from a valid bridge JWT. 5-min single-use
+  replay protection via `bridge_jti_denylist`. Multi-org chooser when
+  `upstream_company_id` matches multiple orgs.
+- **M5 Writeback + joint E2E** — `POST /api/callscraper/writeback` signed
+  with new `v1w` HMAC prefix so the CRM pushes status badges back to
+  callscraper.com call cards. Run a joint staging smoke test with Ken.
+
+**Designer**: hand `docs/DESIGNER_HANDOFF.md` to the callscraper.com
+designer before M1 starts — it covers tokens, layout grammar, interaction
+patterns, the auth-handoff UX, the writeback badge design, and the
+URL structure.
+
+### After Integration Sprint
+
+- **Phase 5 Settings buildout (~90h, 6 micro-sprints)** — ~50 settings
+  leaves currently served by the catch-all stub. Phase 5 M1 (Company →
+  Roles & Permissions, Memberships CRUD) also absorbs hard auth work
+  (invites, session revocation, role enforcement).
+- **Phase 4 Stripe (~76h, 8 modules) — user directive: LAST** — Connect
+  Standard linking, card-on-file, PaymentIntent (flips the disabled
+  "card" pill in `PaymentRecorder`), webhooks, refunds, ACH via Financial
+  Connections, CRM seat subscription, `ai_usage` metering.
+
+### Standing stub work (track in BLOCKERS.md)
+
+- **CallScraper REST API adapter** — typed client at `lib/callscraper-rest.ts`
+  is ready to connect; Ken needs to build the `/api/v1/*` endpoints on
+  callscraper.com. Store API key at Settings → Integrations → API Keys
+  (provider: callscraper) or set `CALLSCRAPER_API_KEY` env var. Test
+  endpoint: `GET /api/sync/callscraper/test-rest`.
+- Twilio voice + SMS webhook wiring (schema ready; adapter interface in
+  `packages/integrations`).
+- LiveSwitch + QuoteSheets video inventory adapters.
+- CSV import parser body (route scaffold exists at
+  `/settings/integrations/import`).
+- Real-time callscraper webhook path (cron covers v1).
+- Drag-to-reschedule on resource calendar.
+- Authorize.net payment adapter (Stripe is Phase 4 work).
 
 ## 7. Key Files Reference
 
