@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
+import { signEstimateToken } from "@/lib/estimate-token";
 
 export const runtime = "nodejs";
 
@@ -39,10 +40,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const cust = oppRel?.customers ?? {};
   const customerId = oppRel?.customer_id ?? null;
 
-  // Build the public view URL with a signed token (id-based for v1.1; HMAC in v1.2)
+  // Build the public view URL with an HMAC-signed token. Token expires in 30
+  // days by default and is the sole authorization for the public estimate
+  // view, sign, and PDF endpoints — anyone holding it can act on the estimate.
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const viewUrl = `${baseUrl}/estimate/${id}`;
-  const pdfUrl = `${baseUrl}/api/estimates/${id}/pdf`;
+  const token = signEstimateToken(id);
+  const viewUrl = `${baseUrl}/estimate/${id}?t=${token}`;
+  const pdfUrl = `${baseUrl}/api/estimates/${id}/pdf?t=${token}`;
 
   const sendEmail = channel === "email" || channel === "both";
   const sendSms = channel === "sms" || channel === "both";

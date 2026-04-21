@@ -1,20 +1,27 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
+import { assertEstimateToken } from "@/lib/estimate-token";
 
 export const runtime = "nodejs";
 
 /**
- * GET /api/estimates/[id]/view
+ * GET /api/estimates/[id]/view?t=<token>
  *
- * Public read-only endpoint for customer-facing estimate page. No auth — relies on
- * the estimate id being unguessable (UUID). v1.2 will add HMAC-signed token verification.
- * Returns minimal data needed to render the customer view.
+ * Public read-only endpoint for customer-facing estimate page. Requires a
+ * valid HMAC-signed token (issued by /api/estimates/[id]/send) bound to this
+ * exact estimate id. Tokens expire after 30 days. Returns minimal data
+ * needed to render the customer view — never internal fields.
  */
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sb = crmClient();
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("t");
+  if (!assertEstimateToken(token, id)) {
+    return NextResponse.json({ error: "Invalid or expired link" }, { status: 401 });
+  }
 
-  // No org filter — public route
+  const sb = crmClient();
+  // No org filter — public route, but token-gated to one specific estimate
   const { data, error } = await sb
     .from("estimates")
     .select("*, opportunities(branch_id, service_date, origin_json, destination_json, customers(customer_name, customer_email))")

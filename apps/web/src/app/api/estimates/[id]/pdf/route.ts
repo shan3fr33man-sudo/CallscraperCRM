@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { crmClient } from "@/lib/crmdb";
 import { getOrgId } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { assertEstimateToken } from "@/lib/estimate-token";
 import { EstimatePdf } from "@/lib/pdf/estimate-template";
 import type { EstimatePdfProps } from "@/lib/pdf/estimate-template";
 import { createElement } from "react";
@@ -10,17 +12,47 @@ import type { DocumentProps } from "@react-pdf/renderer";
 
 export const runtime = "nodejs";
 
-/** GET /api/estimates/[id]/pdf — render estimate as PDF and stream it. */
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * GET /api/estimates/[id]/pdf[?t=<token>]
+ *
+ * Two ways to authorize:
+ *  1. Internal: authenticated user whose org owns the estimate (Sidebar/Estimate
+ *     tab uses this — no token needed).
+ *  2. Public: valid HMAC token bound to this estimate id (issued by /send;
+ *     embedded in the customer-facing /estimate/[id] page link).
+ */
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("t");
 
+  // Authorization: token-gated public access wins; otherwise require auth + org match.
+  let authorized = false;
+  if (assertEstimateToken(token, id)) {
+    authorized = true;
+  } else {
+    const user = await getCurrentUser();
+    if (user) {
+      const orgId = await getOrgId();
+      const { data: rec } = await sb
+        .from("estimates")
+        .select("id")
+        .eq("id", id)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      authorized = Boolean(rec);
+    }
+  }
+  if (!authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // No org filter here — auth was just verified above through one of two paths
   const { data: estimate, error } = await sb
     .from("estimates")
     .select("*")
     .eq("id", id)
-    .eq("org_id", orgId)
     .maybeSingle();
   if (error || !estimate) {
     return NextResponse.json({ error: "Estimate not found" }, { status: 404 });

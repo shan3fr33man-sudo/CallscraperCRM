@@ -38,6 +38,8 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const [data, setData] = useState<ViewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
@@ -46,19 +48,40 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
   const [justSigned, setJustSigned] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/estimates/${id}/view`)
-      .then((r) => r.json())
-      .then((j) => {
+    // Extract token from URL on mount
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("t");
+    setToken(t);
+    if (!t) {
+      setLoadError("This link is missing its access token. Ask the sender to resend.");
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/estimates/${id}/view?t=${encodeURIComponent(t)}`)
+      .then(async (r) => {
+        const j = await r.json();
+        if (!r.ok) {
+          setLoadError(j.error ?? "This link is invalid or expired.");
+          setLoading(false);
+          return;
+        }
         setData(j);
         setSignerName(j.customer?.name ?? "");
         setSignerEmail(j.customer?.email ?? "");
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoadError("Failed to load estimate.");
+        setLoading(false);
+      });
   }, [id]);
 
   async function submitSignature() {
     setSignError("");
+    if (!token) {
+      setSignError("Missing access token");
+      return;
+    }
     if (!signerName.trim()) {
       setSignError("Please type your name");
       return;
@@ -68,7 +91,7 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
       return;
     }
     setSigning(true);
-    const res = await fetch(`/api/estimates/${id}/sign`, {
+    const res = await fetch(`/api/estimates/${id}/sign?t=${encodeURIComponent(token)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -82,7 +105,7 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
     if (j.ok) {
       setJustSigned(true);
       // Reload view state
-      const v = await fetch(`/api/estimates/${id}/view`).then((r) => r.json());
+      const v = await fetch(`/api/estimates/${id}/view?t=${encodeURIComponent(token)}`).then((r) => r.json());
       setData(v);
     } else {
       setSignError(j.error ?? "Failed to sign");
@@ -97,10 +120,13 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
     );
   }
 
-  if (!data) {
+  if (loadError || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Estimate not found.
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-md text-center">
+          <div className="text-lg font-semibold mb-2">Can&apos;t open this estimate</div>
+          <div className="text-sm text-muted-foreground">{loadError ?? "Estimate not found."}</div>
+        </div>
       </div>
     );
   }
@@ -214,7 +240,7 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
           {/* Download + sign */}
           <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col gap-4">
             <a
-              href={`/api/estimates/${estimate.id}/pdf`}
+              href={token ? `/api/estimates/${estimate.id}/pdf?t=${encodeURIComponent(token)}` : "#"}
               target="_blank"
               className="flex items-center gap-2 text-sm text-blue-600 hover:underline self-start"
             >
