@@ -1,12 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/api/", "/_next/", "/favicon.ico"];
+// Prefix-matched paths that bypass the Supabase session check in middleware.
+// API routes enforce their own auth. Public customer-facing pages
+// (/estimate/[id]) use HMAC tokens as their auth. The /launch handoff
+// validates a bridge JWT itself; if invalid, it renders an inline error
+// rather than redirecting to the internal login.
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/api/",
+  "/_next/",
+  "/favicon.ico",
+  "/estimate/", // public customer-facing estimate pages, HMAC-token gated
+];
+
+// Exact-match public paths (no prefix match) so e.g. /launch doesn't also
+// open /launchpad if someone adds that route later.
+const PUBLIC_PATHS_EXACT = new Set<string>(["/launch"]);
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  if (PUBLIC_PATHS_EXACT.has(pathname) || PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
