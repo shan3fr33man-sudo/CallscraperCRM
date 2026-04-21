@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useId, useState } from "react";
 import { Check, Download, Loader2 } from "lucide-react";
 import { SignatureCanvas } from "@/components/SignatureCanvas";
 
@@ -36,6 +36,9 @@ type ViewData = {
 
 export default function PublicEstimatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const nameId = useId();
+  const emailId = useId();
+  const errorId = useId();
   const [data, setData] = useState<ViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -44,8 +47,20 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
   const [signature, setSignature] = useState("");
-  const [signError, setSignError] = useState("");
+  // Field-keyed errors so aria-invalid attaches to exactly the wrong field
+  // (substring-matching a free-form string was brittle — e.g. "name" matches
+  // "company name missing"). `form` is for non-field errors (network, server).
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    signature?: string;
+    form?: string;
+  }>({});
   const [justSigned, setJustSigned] = useState(false);
+  // Combined error message for the alert region. Picks the first field error
+  // so screen readers hear something specific, falling back to the form-level
+  // error.
+  const firstError = errors.form ?? errors.name ?? errors.email ?? errors.signature;
 
   useEffect(() => {
     // Extract token from URL on mount
@@ -77,57 +92,67 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
   }, [id]);
 
   async function submitSignature() {
-    setSignError("");
+    setErrors({});
     if (!token) {
-      setSignError("Missing access token");
+      setErrors({ form: "Missing access token. Ask the sender to resend the link." });
       return;
     }
-    if (!signerName.trim()) {
-      setSignError("Please type your name");
-      return;
-    }
-    if (!signature) {
-      setSignError("Please sign above");
+    const next: typeof errors = {};
+    if (!signerName.trim()) next.name = "Please type your full name";
+    if (!signature) next.signature = "Please sign above";
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
       return;
     }
     setSigning(true);
-    const res = await fetch(`/api/estimates/${id}/sign?t=${encodeURIComponent(token)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        signer_name: signerName,
-        signer_email: signerEmail,
-        signature_data: signature,
-      }),
-    });
-    const j = await res.json();
-    setSigning(false);
-    if (j.ok) {
-      setJustSigned(true);
-      // Reload view state
-      const v = await fetch(`/api/estimates/${id}/view?t=${encodeURIComponent(token)}`).then((r) => r.json());
-      setData(v);
-    } else {
-      setSignError(j.error ?? "Failed to sign");
+    try {
+      const res = await fetch(`/api/estimates/${id}/sign?t=${encodeURIComponent(token)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signer_name: signerName,
+          signer_email: signerEmail,
+          signature_data: signature,
+        }),
+      });
+      const j = await res.json();
+      if (j.ok) {
+        setJustSigned(true);
+        // Reload view state
+        const v = await fetch(`/api/estimates/${id}/view?t=${encodeURIComponent(token)}`).then((r) => r.json());
+        setData(v);
+      } else {
+        setErrors({ form: j.error ?? "Failed to sign. Please try again." });
+      }
+    } catch {
+      setErrors({ form: "Couldn't reach the server. Check your connection and try again." });
+    } finally {
+      setSigning(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      <div
+        className="min-h-screen flex items-center justify-center bg-gray-50"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Loader2 className="w-5 h-5 animate-spin text-gray-500" aria-hidden="true" />
+        <span className="sr-only">Loading your estimate…</span>
       </div>
     );
   }
 
   if (loadError || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <main className="min-h-screen flex items-center justify-center px-6 bg-gray-50 text-gray-900">
         <div className="max-w-md text-center">
-          <div className="text-lg font-semibold mb-2">Can&apos;t open this estimate</div>
-          <div className="text-sm text-muted-foreground">{loadError ?? "Estimate not found."}</div>
+          <h1 className="text-lg font-semibold mb-2">Can&apos;t open this estimate</h1>
+          <p className="text-sm text-gray-600">{loadError ?? "Estimate not found."}</p>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -135,30 +160,45 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
   const alreadyAccepted = Boolean(estimate.accepted_at) || justSigned;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <main className="min-h-screen bg-gray-50 py-10 text-gray-900">
+      <article className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-200 flex items-start justify-between">
+        <header className="px-8 py-6 border-b border-gray-200 flex items-start justify-between gap-4">
           <div>
             <div className="text-lg font-semibold">{company?.name ?? "Moving Company"}</div>
             {company?.address ? (
               <div className="text-xs text-gray-500 mt-0.5">{company.address}</div>
             ) : null}
-            {company?.phone ? <div className="text-xs text-gray-500">{company.phone}</div> : null}
+            {company?.phone ? (
+              <div className="text-xs text-gray-500">
+                <a
+                  href={`tel:${company.phone.replace(/[^\d+]/g, "")}`}
+                  className="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 rounded"
+                >
+                  {company.phone}
+                </a>
+              </div>
+            ) : null}
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gray-700">ESTIMATE</div>
-            <div className="text-sm text-gray-500 mt-1">#{estimate.number}</div>
+            <h1 className="text-2xl font-bold text-gray-700">ESTIMATE</h1>
+            <div className="text-sm text-gray-500 mt-1">
+              <span className="sr-only">Estimate number </span>#{estimate.number}
+            </div>
             {estimate.valid_until ? (
               <div className="text-xs text-gray-400 mt-1">Valid until {estimate.valid_until}</div>
             ) : null}
           </div>
-        </div>
+        </header>
 
         {/* Acceptance banner */}
         {alreadyAccepted && (
-          <div className="px-8 py-3 bg-green-50 border-b border-green-200 flex items-center gap-2 text-sm text-green-700">
-            <Check className="w-4 h-4" />
+          <div
+            role="status"
+            aria-live="polite"
+            className="px-8 py-3 bg-green-50 border-b border-green-200 flex items-center gap-2 text-sm text-green-700"
+          >
+            <Check className="w-4 h-4" aria-hidden="true" />
             This estimate has been signed{estimate.accepted_at ? ` on ${estimate.accepted_at.slice(0, 10)}` : ""}.
           </div>
         )}
@@ -239,58 +279,114 @@ export default function PublicEstimatePage({ params }: { params: Promise<{ id: s
 
           {/* Download + sign */}
           <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col gap-4">
-            <a
-              href={token ? `/api/estimates/${estimate.id}/pdf?t=${encodeURIComponent(token)}` : "#"}
-              target="_blank"
-              className="flex items-center gap-2 text-sm text-blue-600 hover:underline self-start"
-            >
-              <Download className="w-3 h-3" /> Download PDF
-            </a>
+            {token ? (
+              <a
+                href={`/api/estimates/${estimate.id}/pdf?t=${encodeURIComponent(token)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline self-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 rounded"
+              >
+                <Download className="w-3 h-3" aria-hidden="true" /> Download PDF
+              </a>
+            ) : null}
 
             {!alreadyAccepted && (
-              <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
-                <h3 className="text-sm font-semibold mb-3">Accept &amp; sign this estimate</h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitSignature();
+                }}
+                className="border border-gray-200 rounded-md p-4 bg-gray-50"
+                aria-describedby={firstError ? errorId : undefined}
+              >
+                <h2 className="text-sm font-semibold mb-3">Accept &amp; sign this estimate</h2>
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Full name</label>
+                    <label htmlFor={nameId} className="text-xs text-gray-500 block mb-1">
+                      Full name <span className="text-red-500" aria-hidden="true">*</span>
+                      <span className="sr-only"> (required)</span>
+                    </label>
                     <input
+                      id={nameId}
+                      required
+                      autoComplete="name"
                       value={signerName}
-                      onChange={(e) => setSignerName(e.target.value)}
-                      className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                      onChange={(e) => {
+                        setSignerName(e.target.value);
+                        if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+                      }}
+                      aria-invalid={errors.name ? true : undefined}
+                      aria-errormessage={errors.name ? errorId : undefined}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 aria-[invalid=true]:border-red-500"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Email (optional)</label>
+                    <label htmlFor={emailId} className="text-xs text-gray-500 block mb-1">
+                      Email (optional)
+                    </label>
                     <input
+                      id={emailId}
                       type="email"
+                      autoComplete="email"
                       value={signerEmail}
-                      onChange={(e) => setSignerEmail(e.target.value)}
-                      className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                      onChange={(e) => {
+                        setSignerEmail(e.target.value);
+                        if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+                      }}
+                      aria-invalid={errors.email ? true : undefined}
+                      aria-errormessage={errors.email ? errorId : undefined}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 aria-[invalid=true]:border-red-500"
                     />
                   </div>
                 </div>
 
-                <SignatureCanvas onChange={setSignature} width={400} height={140} />
+                <div
+                  className={errors.signature ? "ring-2 ring-red-500 rounded-md" : undefined}
+                >
+                  <SignatureCanvas
+                    onChange={(v) => {
+                      setSignature(v);
+                      if (v && errors.signature) setErrors((p) => ({ ...p, signature: undefined }));
+                    }}
+                    width={400}
+                    height={140}
+                  />
+                </div>
 
-                {signError && <div className="text-sm text-red-600 mt-2">{signError}</div>}
+                {firstError ? (
+                  <p id={errorId} role="alert" className="text-sm text-red-600 mt-2">
+                    {firstError}
+                  </p>
+                ) : null}
+
+                {/* aria-live region announces submit progress + success to screen
+                    readers without visually competing with the in-button spinner. */}
+                <p className="sr-only" role="status" aria-live="polite">
+                  {signing ? "Signing estimate, please wait" : justSigned ? "Estimate signed successfully" : ""}
+                </p>
 
                 <button
-                  onClick={submitSignature}
+                  type="submit"
                   disabled={signing}
-                  className="mt-4 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md disabled:opacity-60"
+                  aria-busy={signing || undefined}
+                  className="mt-4 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50"
                 >
-                  {signing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                  Accept &amp; sign
+                  {signing ? (
+                    <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Check className="w-3 h-3" aria-hidden="true" />
+                  )}
+                  {signing ? "Signing\u2026" : "Accept & sign"}
                 </button>
-                <div className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-2">
                   By signing, you agree to the terms of this estimate.
-                </div>
-              </div>
+                </p>
+              </form>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </article>
+    </main>
   );
 }

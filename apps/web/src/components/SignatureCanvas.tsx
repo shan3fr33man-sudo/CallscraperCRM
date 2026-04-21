@@ -95,9 +95,11 @@ export function SignatureCanvas({
 
   return (
     <div className="inline-block">
-      <div className="border border-border rounded-md bg-white">
+      <div className="border border-gray-300 rounded-md bg-white">
         <canvas
           ref={canvasRef}
+          role="img"
+          aria-label={hasContent ? "Signature drawn; clear to redraw" : "Signature area — draw your signature here"}
           onMouseDown={start}
           onMouseMove={move}
           onMouseUp={end}
@@ -109,14 +111,15 @@ export function SignatureCanvas({
         />
       </div>
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-muted-foreground">Sign above</span>
+        <span className="text-xs text-gray-500">Sign above</span>
         <button
           type="button"
           onClick={clear}
           disabled={!hasContent}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+          aria-label="Clear signature"
+          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-1 rounded"
         >
-          <Eraser className="w-3 h-3" /> Clear
+          <Eraser className="w-3 h-3" aria-hidden="true" /> Clear
         </button>
       </div>
     </div>
