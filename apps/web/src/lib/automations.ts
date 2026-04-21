@@ -8,6 +8,7 @@ export type ActionType =
   | "set_status"
   | "assign_owner"
   | "create_ticket"
+  | "create_invoice"
   | "webhook";
 
 export interface Action {
@@ -222,6 +223,81 @@ async function runAction(
         type: (p.type as string) ?? null,
         priority: (p.priority as number) ?? 3,
       });
+      return;
+    }
+    case "create_invoice": {
+      // Auto-generate invoice from estimate or job. Triggered by estimate.accepted or job.finished.
+      const estimateId = (p.estimate_id as string) ?? (ev.payload.estimate_id as string) ?? null;
+      const jobId = (p.job_id as string) ?? (ev.payload.job_id as string) ?? null;
+      const dueInDays = (p.due_in_days as number) ?? 14;
+      if (!estimateId && !jobId) return;
+
+      let lineItems: Array<Record<string, unknown>> = [];
+      let subtotal = 0;
+      let discounts = 0;
+      let salesTax = 0;
+      let amountDue = 0;
+      let customerId: string | null = (ev.payload.customer_id as string) ?? null;
+      let opportunityId: string | null = (ev.payload.opportunity_id as string) ?? null;
+
+      if (estimateId) {
+        const { data: est } = await supabase
+          .from("estimates")
+          .select("*, opportunities(customer_id)")
+          .eq("id", estimateId)
+          .maybeSingle();
+        if (est) {
+          lineItems = (est.charges_json as Array<Record<string, unknown>> | null) ?? [];
+          subtotal = (est.subtotal as number) ?? 0;
+          discounts = (est.discounts as number) ?? 0;
+          salesTax = (est.sales_tax as number) ?? 0;
+          amountDue = (est.amount as number) ?? 0;
+          opportunityId = (est.opportunity_id as string) ?? opportunityId;
+          customerId =
+            customerId ??
+            ((est as { opportunities?: { customer_id?: string } })?.opportunities?.customer_id ?? null);
+        }
+      }
+
+      const dueDate = new Date(Date.now() + dueInDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const { data: invoice } = await supabase
+        .from("invoices")
+        .insert({
+          org_id: ev.org_id,
+          job_id: jobId,
+          opportunity_id: opportunityId,
+          customer_id: customerId,
+          estimate_id: estimateId,
+          invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
+          status: "sent",
+          line_items_json: lineItems,
+          subtotal,
+          discounts,
+          sales_tax: salesTax,
+          amount_due: amountDue,
+          amount_paid: 0,
+          balance: amountDue,
+          due_date: dueDate,
+          issued_at: new Date().toISOString(),
+        })
+        .select("id, amount_due")
+        .single();
+
+      if (invoice) {
+        await emitEvent(supabase, {
+          org_id: ev.org_id,
+          type: "invoice.created",
+          related_type: "invoice",
+          related_id: invoice.id,
+          payload: {
+            invoice_id: invoice.id,
+            amount_due: invoice.amount_due,
+            customer_id: customerId,
+            opportunity_id: opportunityId,
+            from_event: ev.id,
+          },
+        });
+      }
       return;
     }
     case "webhook": {
