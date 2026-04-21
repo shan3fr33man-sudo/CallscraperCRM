@@ -1,8 +1,8 @@
 {
   "last_completed_phase": "v1.1-Phase-3.5-Polish",
-  "last_completed_task": "D2: public estimate polish (Referrer-Policy header, field-keyed errors, aria-live progress, SignatureCanvas a11y)",
-  "current_phase": "v1.1-Phase-3.5-Polish",
-  "current_task": "F2: calendar views for team / mine / follow-ups",
+  "last_completed_task": "Sprint retrospective: all 12 modules shipped, route inventory regenerated (73 routes), 30 unit tests passing, vocab + tsc clean",
+  "current_phase": "v1.1-Integration-Sprint",
+  "current_task": "Awaiting kickoff: shared top-bar with callscraper.com, Nginx reverse-proxy, dashboard integration, E2E with Ken",
   "launch_status": "GO",
   "blockers": [],
   "phase_3_5_queue": {
@@ -13,29 +13,29 @@
     "F4": "DONE (4764935) \u2014 invoice detail page + PaymentRecorder + SendInvoiceDialog + keyboard-navigable AR rows",
     "F5": "DONE (94ad517) \u2014 estimate PATCH + InlineEditableTable primitive + LineItemEditor + status gates",
     "D2": "DONE (9bac45c) \u2014 public estimate: HTTP Referrer-Policy + noindex + semantic HTML + field-keyed errors + SignatureCanvas a11y",
-    "F2": "IN PROGRESS \u2014 /calendars/team + /mine + /follow-ups",
-    "F3": "PENDING \u2014 crew picker on dispatch command center",
-    "F6": "PENDING \u2014 opportunity-types + service-types settings",
-    "+C": "PENDING \u2014 Create-a-Customer standalone form",
-    "+S": "PENDING \u2014 search bars on /customers/all-profiles + /customer-service/tickets/active",
-    "retro": "PENDING \u2014 sprint retrospective + BLOCKERS close-out + regenerate ROUTE_INVENTORY.md"
+    "F2": "DONE (7c0610c) \u2014 /calendars/team + /mine + /follow-ups, related_type filter on calendar API, no-stack empty states",
+    "F3": "DONE (4492bf9) \u2014 CrewPicker inline popover + /api/trucks endpoint + key-based remount fix",
+    "F6": "DONE (39d7803) \u2014 service-types catalog + tariff resolver preview API + winner badge",
+    "+C": "DONE (eb94da3) \u2014 Create Customer form + global C shortcut",
+    "+S": "DONE (3ba8de9) \u2014 search/filter bars on /customers/all-profiles and /customer-service/tickets/active",
+    "retro": "DONE \u2014 BLOCKERS closed for InlineEditableTable, Stripe seam, I1 schema; ROUTE_INVENTORY regenerated (73 routes); 30 unit tests passing"
   },
   "next_3_tasks": [
-    "F2: ship /calendars/{team,mine,follow-ups} by querying calendar_events with scoped filters; reuse existing CalendarView + EventDetailDrawer",
-    "F3: crew-size stepper + truck multiselect + assigned-to dropdown popover per job row on /dispatch/command-center",
-    "F6: /settings/tariffs/opportunity-types + /settings/estimates/service-types (both use SettingsListEditor + live resolve badge)"
+    "Integration Sprint M1: shared top-bar component for callscraper.com + Nginx reverse-proxy at /crm",
+    "Integration Sprint M2: 'Open in CRM' button on call cards (Ken's side) + deep-link end-to-end test with Ken's live system",
+    "Integration Sprint M3: cross-product dashboard (call metrics from callscraper + pipeline from CRM)"
   ],
-  "test_status": "tsc clean; vocab clean; 20 unit tests on auth-bridge + 10 on estimate-token passing; seed exercises full lifecycle",
+  "test_status": "tsc clean across all 12 modules; vocab clean; 30 unit tests (10 estimate-token, 20 auth-bridge) passing; 73 routes in inventory; build passes",
   "build_status": "tsc_clean",
-  "last_commit": "9bac45c D2: public estimate polish (a11y, focus rings, referrer-policy)",
+  "last_commit": "3ba8de9 +S: search + filter bars on /customers/all-profiles and /tickets/active",
   "v1_1_phases": {
     "phase_1": "DONE \u2014 tariff CRUD + pricing engine + estimate engine integration",
     "phase_2": "DONE \u2014 estimate types + room inventory + PDF + e-sig + deposit + EstimateTab",
     "phase_3": "DONE \u2014 invoices + payments rollup + AR dashboard + profitability + QuickBooks CSV",
     "bulletproofing": "DONE \u2014 M1 HMAC tokens, M2/M3 DB integrity + trigger + invoice unique, M4 zod/scope, M5 [id] routes + review package",
-    "phase_3_5": "IN PROGRESS \u2014 D1/F1/D3/I1/F4/F5/D2 committed; F2/F3/F6/+C/+S pending",
-    "integration_sprint": "TODO \u2014 shared top-bar with callscraper.com, Nginx reverse-proxy, dashboard integration, E2E with Ken",
-    "phase_4": "TODO (LAST) \u2014 Stripe card-on-file + PaymentIntent + webhook + refunds",
+    "phase_3_5": "DONE \u2014 12/12 modules shipped: D1, F1, D3, I1, F4, F5, D2, F2, F3, F6, +C, +S",
+    "integration_sprint": "QUEUED \u2014 shared top-bar with callscraper.com, Nginx reverse-proxy, dashboard integration, E2E with Ken",
+    "phase_4": "TODO (LAST) \u2014 Stripe card-on-file + PaymentIntent + webhook + refunds (per user directive: very last thing)",
     "phase_5": "TODO \u2014 settings pages buildout (~50 leaves) + remaining route zod migration",
     "phase_6": "TODO \u2014 15 canned reports + report engine + CSV/PDF export",
     "phase_7": "TODO \u2014 storage, marketing, smart-marketing, payroll, customer portal"

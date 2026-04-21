@@ -67,26 +67,21 @@ Format: `[status] [severity] [module] description — action`
   automated pre-check bundle: `tsc --noEmit` + `node scripts/check-vocab.ts`.
   Save agent cycles for semantic review only.
 
-- **open** CONCERN (I1) `organizations.upstream_company_id` schema decision
-  Action: when implementing migration 0009, make the column nullable and
-  non-unique initially. Multi-workspace collisions across callscraper and
-  CRM aren't resolved yet — locking in UNIQUE now forces a migration later
-  if a single callscraper workspace wants to map to multiple CRM orgs (or
-  vice versa). Document the lock-in decision in INTEGRATION.md.
+- **CLOSED** [4b510d0] CONCERN (I1) `organizations.upstream_company_id`
+  schema decision. Migration 0009 ships nullable + non-unique with a
+  partial index. Franchise-topology rationale documented in the migration
+  comment + INTEGRATION.md.
 
-- **open** CONCERN (F4) Stripe seam preservation
-  Action: when generalizing `DepositCollector` → `PaymentRecorder` in F4,
-  keep the `"card"` branch with a disabled "Card (Stripe) — configure in
-  Settings" tooltip, not stripped. User said Stripe is LAST, not NEVER.
-  The payment-method enum already accepts "card" per DB CHECK (migration
-  0006) — don't regress.
+- **CLOSED** [4764935] CONCERN (F4) Stripe seam preserved.
+  PaymentRecorder ships with the "Card" pill disabled + Phase-4 tooltip;
+  the payment-method enum still accepts "card". When Stripe lands the only
+  change is removing the disabled flag and wiring StripePaymentForm.
 
-- **open** CONCERN (F5) Extract `InlineEditableTable` primitive for F4 reuse
-  Action: F4's invoice line items and F5's estimate line items share
-  identical UI patterns (inline editable table, server recompute,
-  optimistic update). Build the primitive once in F5 and reuse in F4 on
-  follow-up pass — or if F5 lands before F4 needs its invoice line-item
-  UI, retrofit F4 during code review.
+- **CLOSED** [94ad517] CONCERN (F5) Extract `InlineEditableTable` primitive.
+  Shipped at `apps/web/src/components/ui/InlineEditableTable.tsx` and
+  consumed by `LineItemEditor`. Invoice line-item UI in F4 was scoped to
+  read-only display; if/when invoice line-items become editable they can
+  reuse the same primitive without changes.
 
 - **open** CONCERN (tests) No Playwright smoke per F-module
   Action: add one Playwright smoke per F-module as it lands (create → click
