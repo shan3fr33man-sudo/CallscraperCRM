@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Plus, Send, FileText, Check, ExternalLink } from "lucide-react";
 import { InventoryEditor } from "@/components/InventoryEditor";
 import { DepositCollector } from "@/components/DepositCollector";
+import { SendEstimateDialog } from "@/components/SendEstimateDialog";
+import { Button, EmptyState } from "@/components/ui";
 
 type Opp = {
   id: string;
@@ -51,6 +53,11 @@ export function EstimateTab({
   const [showNew, setShowNew] = useState(false);
   const [activeEstimateId, setActiveEstimateId] = useState<string | null>(null);
   const [showDeposit, setShowDeposit] = useState<string | null>(null);
+  const [sendDialogFor, setSendDialogFor] = useState<string | null>(null);
+  const [customerContact, setCustomerContact] = useState<{ email: string; phone: string }>({
+    email: "",
+    phone: "",
+  });
 
   async function reloadEstimates() {
     if (!primaryOpp) return;
@@ -64,11 +71,42 @@ export function EstimateTab({
     reloadEstimates();
   }, [primaryOpp?.id]);
 
+  // Pre-fetch the customer's email/phone once so the SendEstimateDialog opens
+  // with the recipient fields pre-filled.
+  useEffect(() => {
+    if (!customerId) return;
+    fetch(`/api/customers/${customerId}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.customer) {
+          setCustomerContact({
+            email: (j.customer.customer_email as string) ?? "",
+            phone: (j.customer.customer_phone as string) ?? "",
+          });
+        }
+      })
+      .catch(() => {
+        /* non-fatal */
+      });
+  }, [customerId]);
+
+  // Latest draft (unsent, unsigned) estimate. Used by the header quick-action.
+  // When multiple drafts exist, showing the estimate number in the label avoids
+  // the "which one will this send?" ambiguity the reviewer flagged.
+  const drafts = estimates.filter((e) => !e.sent_at && !e.accepted_at);
+  const latestDraft = drafts[0];
+  const draftLabel = latestDraft
+    ? drafts.length === 1
+      ? "Send latest draft"
+      : `Send #${latestDraft.estimate_number ?? latestDraft.id.slice(0, 8).toUpperCase()}`
+    : null;
+
   if (!primaryOpp) {
     return (
-      <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-6 text-center">
-        No opportunity yet. Create one from the Sales tab first.
-      </div>
+      <EmptyState
+        title="No opportunity yet"
+        description="Create an opportunity from the Sales tab before drafting an estimate."
+      />
     );
   }
 
@@ -79,16 +117,39 @@ export function EstimateTab({
         <InventoryEditor opportunityId={primaryOpp.id} />
       </Section>
 
+      {/* Send-estimate dialog (opened from row button OR header quick-action) */}
+      <SendEstimateDialog
+        open={Boolean(sendDialogFor)}
+        estimateId={sendDialogFor ?? ""}
+        defaultEmail={customerContact.email}
+        defaultPhone={customerContact.phone}
+        onClose={() => setSendDialogFor(null)}
+        onSent={reloadEstimates}
+      />
+
       {/* Estimates */}
       <Section
         title="Estimates"
         action={
-          <button
-            onClick={() => setShowNew(!showNew)}
-            className="flex items-center gap-1 text-sm bg-accent text-white px-3 py-1.5 rounded-md"
-          >
-            <Plus className="w-3 h-3" /> New Estimate
-          </button>
+          <div className="flex gap-2">
+            {latestDraft ? (
+              <Button
+                variant="secondary"
+                size="md"
+                icon={<Send className="w-3 h-3" />}
+                onClick={() => setSendDialogFor(latestDraft.id)}
+                title={drafts.length > 1 ? `${drafts.length} drafts — sends the most recent` : undefined}
+              >
+                {draftLabel}
+              </Button>
+            ) : null}
+            <button
+              onClick={() => setShowNew(!showNew)}
+              className="flex items-center gap-1 text-sm bg-accent text-white px-3 py-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              <Plus className="w-3 h-3" /> New Estimate
+            </button>
+          </div>
         }
       >
         {showNew && (
@@ -104,8 +165,17 @@ export function EstimateTab({
         {loading && <div className="text-sm text-muted-foreground mt-2">Loading…</div>}
 
         {!loading && estimates.length === 0 && (
-          <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-6 text-center mt-2">
-            No estimates drafted. Click &quot;New Estimate&quot; to create one.
+          <div className="mt-2">
+            <EmptyState
+              icon={<FileText className="w-6 h-6" />}
+              title="No estimates drafted"
+              description="Create your first estimate using the tariff engine or a manual line-item entry."
+              action={
+                <Button onClick={() => setShowNew(true)} icon={<Plus className="w-3 h-3" />}>
+                  New Estimate
+                </Button>
+              }
+            />
           </div>
         )}
 
@@ -121,6 +191,7 @@ export function EstimateTab({
                 showDeposit={showDeposit === e.id}
                 setShowDeposit={(s) => setShowDeposit(s ? e.id : null)}
                 onChange={reloadEstimates}
+                onOpenSendDialog={setSendDialogFor}
               />
             ))}
           </div>
@@ -171,6 +242,7 @@ function EstimateRow({
   showDeposit,
   setShowDeposit,
   onChange,
+  onOpenSendDialog,
 }: {
   estimate: Estimate;
   active: boolean;
@@ -179,19 +251,8 @@ function EstimateRow({
   showDeposit: boolean;
   setShowDeposit: (s: boolean) => void;
   onChange: () => void;
+  onOpenSendDialog: (id: string) => void;
 }) {
-  const [sending, setSending] = useState(false);
-
-  async function send() {
-    setSending(true);
-    await fetch(`/api/estimates/${estimate.id}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel: "email" }),
-    });
-    setSending(false);
-    onChange();
-  }
 
   return (
     <div className="border border-border rounded-md overflow-hidden">
@@ -243,24 +304,34 @@ function EstimateRow({
             <a
               href={`/api/estimates/${estimate.id}/pdf`}
               target="_blank"
-              className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-background"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
             >
               <FileText className="w-3 h-3" /> PDF
             </a>
             <a
               href={`/estimate/${estimate.id}`}
               target="_blank"
-              className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-background"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
             >
               <ExternalLink className="w-3 h-3" /> Customer view
             </a>
-            {!estimate.sent_at && (
+            {!estimate.sent_at && !estimate.accepted_at && (
               <button
-                onClick={send}
-                disabled={sending}
-                className="flex items-center gap-1 px-2 py-1 rounded bg-accent text-white disabled:opacity-60"
+                onClick={() => onOpenSendDialog(estimate.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-accent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
               >
-                <Send className="w-3 h-3" /> {sending ? "Sending…" : "Send"}
+                <Send className="w-3 h-3" /> Send
+              </button>
+            )}
+            {estimate.sent_at && !estimate.accepted_at && (
+              <button
+                onClick={() => onOpenSendDialog(estimate.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                title="Resend to customer"
+              >
+                <Send className="w-3 h-3" /> Resend
               </button>
             )}
             {estimate.deposit_amount > 0 && !estimate.deposit_paid_at && (

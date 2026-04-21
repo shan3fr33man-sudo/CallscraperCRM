@@ -9,17 +9,31 @@ export const runtime = "nodejs";
 /**
  * POST /api/estimates/[id]/send
  *
- * Body: { channel?: "email" | "sms" | "both", to?: string, message?: string }
+ * Body:
+ *   {
+ *     channel?: "email" | "sms" | "both",
+ *     to?: string,         // single-channel override (email OR phone depending on channel)
+ *     to_email?: string,   // explicit email override (wins over `to` and customer-on-file)
+ *     to_phone?: string,   // explicit phone override
+ *     message?: string,
+ *   }
  *
  * Marks estimate as sent, generates a public view link, and writes an email_log
  * (with PDF link) and/or sms_log entry. Stub provider — actual delivery wires
  * in Phase 4 (Twilio/Resend). Emits estimate.sent for the river.
+ *
+ * Recipient resolution (per channel):
+ *   to_email / to_phone — if present, takes precedence (works for "both" mode)
+ *   to                  — legacy single-channel override
+ *   customer-on-file    — default
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as {
     channel?: "email" | "sms" | "both";
     to?: string;
+    to_email?: string;
+    to_phone?: string;
     message?: string;
   };
   const channel = body.channel ?? "email";
@@ -50,8 +64,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const sendEmail = channel === "email" || channel === "both";
   const sendSms = channel === "sms" || channel === "both";
-  const recipientEmail = (body.to && channel === "email") ? body.to : (cust.customer_email as string | undefined);
-  const recipientPhone = (body.to && channel === "sms") ? body.to : (cust.customer_phone as string | undefined);
+  // Precedence: explicit `to_email`/`to_phone` > legacy single-channel `to` > customer-on-file.
+  // This lets "both" mode honor edited recipients, addressing the prior bug where
+  // editing the email field with channel=both silently sent to the stale on-file address.
+  const recipientEmail =
+    body.to_email ??
+    (body.to && channel === "email" ? body.to : undefined) ??
+    (cust.customer_email as string | undefined);
+  const recipientPhone =
+    body.to_phone ??
+    (body.to && channel === "sms" ? body.to : undefined) ??
+    (cust.customer_phone as string | undefined);
 
   // Email log
   if (sendEmail && recipientEmail) {
