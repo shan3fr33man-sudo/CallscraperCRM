@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CallscraperCRM — 20-Page Visual Tour</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:     '#0a0a0a',
+        panel:  '#111113',
+        border: '#1f1f23',
+        muted:  '#7a7a85',
+        text:   '#e7e7ea',
+        accent: '#7c5cff',
+      },
+      fontFamily: {
+        sans: ['-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+      },
+    },
+  },
+};
+</script>
+<style>
+  body { background: #0a0a0a; color: #e7e7ea; }
+  .browser-frame { box-shadow: 0 20px 60px -10px rgba(0,0,0,0.6); }
+  .scroll-mt { scroll-margin-top: 80px; }
+  /* status pill helper */
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; }
+  .dot { display:inline-block; width:6px; height:6px; border-radius:9999px; }
+  /* table density */
+  .row { border-top: 1px solid #1f1f23; }
+  .row:hover { background: rgba(124,92,255,0.05); }
+  /* sidebar nav active style */
+  .nav-active { background: rgba(124,92,255,0.15); color: #7c5cff; }
+  .nav-link { color: #7a7a85; }
+  .nav-link:hover { background: rgba(255,255,255,0.05); color: #e7e7ea; }
+  /* fixed TOC at top */
+  .toc { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); background: rgba(10,10,10,0.85); border-bottom: 1px solid #1f1f23; }
+  /* light theme override for the public estimate page mockup */
+  .light-mockup { color: #1a1a1a; background: #f9fafb; }
+  .light-mockup .light-card { background: #ffffff; border-color: #e5e7eb; color: #1a1a1a; }
+  .light-mockup .light-muted { color: #6b7280; }
+  .light-mockup .light-border { border-color: #e5e7eb; }
+  /* tiny status dots */
+  .s-booked { background: #3b82f6; }
+  .s-confirmed { background: #22c55e; }
+  .s-en_route { background: #f59e0b; }
+  .s-in_progress { background: #eab308; }
+  .s-finished { background: #9ca3af; }
+</style>
+</head>
+<body class="font-sans">
+
+<!-- ============ HEADER ============ -->
+<header class="border-b border-border px-8 py-8 bg-panel">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-center gap-3 text-xs text-muted uppercase tracking-wider mb-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-accent"></span>
+      Visual Tour · Phase 3.5 complete · 2026-04-21
+    </div>
+    <h1 class="text-3xl font-bold mb-2">CallscraperCRM — 20 Page Specimens</h1>
+    <p class="text-sm text-muted max-w-3xl">
+      Self-contained visual tour of every notable surface in the CRM today.
+      Use this with <code class="text-accent">docs/DESIGNER_HANDOFF.md</code>
+      when handing off to the callscraper.com designer. Each mockup mirrors
+      the real page's layout, density, and data.
+    </p>
+  </div>
+</header>
+
+<!-- ============ TABLE OF CONTENTS ============ -->
+<nav class="toc">
+  <div class="max-w-7xl mx-auto px-8 py-3">
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-1 text-[11px]">
+      <a href="#p1"  class="text-muted hover:text-accent">01 · Home Dashboard</a>
+      <a href="#p2"  class="text-muted hover:text-accent">02 · Calls Feed</a>
+      <a href="#p3"  class="text-muted hover:text-accent">03 · Sales Command Center</a>
+      <a href="#p4"  class="text-muted hover:text-accent">04 · All Customer Profiles</a>
+      <a href="#p5"  class="text-muted hover:text-accent">05 · Customer Detail</a>
+      <a href="#p6"  class="text-muted hover:text-accent">06 · All Opportunities</a>
+      <a href="#p7"  class="text-muted hover:text-accent">07 · My Leads</a>
+      <a href="#p8"  class="text-muted hover:text-accent">08 · Follow-ups Queue</a>
+      <a href="#p9"  class="text-muted hover:text-accent">09 · Dispatch Command Center</a>
+      <a href="#p10" class="text-muted hover:text-accent">10 · Receivables</a>
+      <a href="#p11" class="text-muted hover:text-accent">11 · Invoice Detail</a>
+      <a href="#p12" class="text-muted hover:text-accent">12 · Jobs Queue</a>
+      <a href="#p13" class="text-muted hover:text-accent">13 · Team Calendar</a>
+      <a href="#p14" class="text-muted hover:text-accent">14 · My Calendar</a>
+      <a href="#p15" class="text-muted hover:text-accent">15 · Follow-ups Calendar</a>
+      <a href="#p16" class="text-muted hover:text-accent">16 · Open Tasks</a>
+      <a href="#p17" class="text-muted hover:text-accent">17 · Active Tickets</a>
+      <a href="#p18" class="text-muted hover:text-accent">18 · Tariff Library</a>
+      <a href="#p19" class="text-muted hover:text-accent">19 · Tariff Editor</a>
+      <a href="#p20" class="text-muted hover:text-accent">20 · Public Estimate (light)</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-7xl mx-auto px-8 py-12 space-y-16">
+
+<!-- ===== Reusable mockup macros (rendered by hand below) ===== -->
+<!-- Sidebar template embedded inline in each mockup. Active nav state is per-page. -->
+
+<!-- ============ 01 · HOME DASHBOARD ============ -->
+<section id="p1" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">01</span>
+    <h2 class="text-lg font-semibold">Home Dashboard</h2>
+    <span class="text-xs text-muted font-mono">/</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">server component · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <!-- browser bar -->
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/</div>
+    </div>
+    <!-- crm shell -->
+    <div class="flex bg-bg" style="min-height: 420px;">
+      <!-- sidebar -->
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>⌂</span><span>Home</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>📅</span><span>Cal</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>✓</span><span>Tasks</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>↗</span><span>Sales</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>👥</span><span>Cust</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>🚚</span><span>Disp</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>$</span><span>Acct</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>⚙</span><span>Set</span></div>
+      </aside>
+      <!-- main column -->
+      <div class="flex-1">
+        <!-- topbar -->
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Dashboard</span>
+          <input class="flex-1 max-w-md bg-bg border border-border rounded px-2 py-1 text-xs" placeholder="Search customers, opportunities, jobs…" />
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs flex items-center gap-1">+ New</button>
+          <span class="text-muted">🔔<sup class="text-accent">3</sup></span>
+          <span class="bg-accent/15 text-accent px-2 py-0.5 rounded text-[10px]">Ask Claude</span>
+          <div class="w-7 h-7 rounded-full bg-border flex items-center justify-center text-[10px]">SF</div>
+        </div>
+        <!-- content -->
+        <div class="p-6">
+          <div class="grid grid-cols-3 gap-4 max-w-3xl mb-6">
+            <div class="rounded-lg border border-border bg-panel p-4">
+              <div class="text-[10px] uppercase tracking-wide text-muted">Calls (7d)</div>
+              <div class="text-2xl font-semibold mt-1">1,824</div>
+            </div>
+            <div class="rounded-lg border border-border bg-panel p-4">
+              <div class="text-[10px] uppercase tracking-wide text-muted">Leads (7d)</div>
+              <div class="text-2xl font-semibold mt-1">317</div>
+            </div>
+            <div class="rounded-lg border border-border bg-panel p-4">
+              <div class="text-[10px] uppercase tracking-wide text-muted">AI Summaries (7d)</div>
+              <div class="text-2xl font-semibold mt-1">268</div>
+            </div>
+          </div>
+          <div class="text-xs text-muted max-w-3xl">
+            Live data is read directly from your callscraper.com Supabase project.
+            The CRM mirror runs in the background — see <code class="text-accent">/integrations</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Reads upstream callscraper Supabase directly for live 7-day counts. Falls back to a muted-red error string if upstream is unreachable.</p>
+</section>
+
+<!-- ============ 02 · CALLS FEED ============ -->
+<section id="p2" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">02</span>
+    <h2 class="text-lg font-semibold">Calls Feed</h2>
+    <span class="text-xs text-muted font-mono">/calls</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">server · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/calls</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 480px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>⌂</span></div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>📞</span><span>Calls</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>📅</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>↗</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Calls</span>
+          <input class="flex-1 max-w-md bg-bg border border-border rounded px-2 py-1 text-xs" placeholder="Search…" />
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ New</button>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <input class="bg-panel border border-border rounded px-2 py-1 text-xs flex-1 max-w-xs" placeholder="Search by phone, agent, outcome…" />
+            <div class="flex gap-1">
+              <button class="text-[11px] px-2 py-1 rounded border border-accent bg-accent text-white">Today</button>
+              <button class="text-[11px] px-2 py-1 rounded border border-border">7d</button>
+              <button class="text-[11px] px-2 py-1 rounded border border-border">30d</button>
+              <button class="text-[11px] px-2 py-1 rounded border border-border">All</button>
+            </div>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">From</th><th class="text-left px-3 py-2">Agent</th><th class="text-left px-3 py-2">When</th><th class="text-left px-3 py-2">Dur</th><th class="text-left px-3 py-2">Outcome</th><th class="text-left px-3 py-2">Quality</th><th class="text-left px-3 py-2">Move</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2 font-mono">(206) 555-1284</td><td class="px-3 py-2">ext 405</td><td class="px-3 py-2 text-muted">2m ago</td><td class="px-3 py-2 font-mono">4:12</td><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">booked</span></td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">hot</span></td><td class="px-3 py-2 text-muted">3BR local</td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">(425) 555-8821</td><td class="px-3 py-2">ext 412</td><td class="px-3 py-2 text-muted">9m ago</td><td class="px-3 py-2 font-mono">2:48</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">follow-up</span></td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">warm</span></td><td class="px-3 py-2 text-muted">studio</td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">(253) 555-3127</td><td class="px-3 py-2">ext 405</td><td class="px-3 py-2 text-muted">17m ago</td><td class="px-3 py-2 font-mono">0:38</td><td class="px-3 py-2 text-muted">no-answer</td><td class="px-3 py-2 text-muted">—</td><td class="px-3 py-2 text-muted">—</td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">(206) 555-9912</td><td class="px-3 py-2">ext 408</td><td class="px-3 py-2 text-muted">31m ago</td><td class="px-3 py-2 font-mono">6:41</td><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">quoted</span></td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">hot</span></td><td class="px-3 py-2 text-muted">commercial</td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">(360) 555-4502</td><td class="px-3 py-2">ext 412</td><td class="px-3 py-2 text-muted">42m ago</td><td class="px-3 py-2 font-mono">1:22</td><td class="px-3 py-2 text-muted">voicemail</td><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">cold</span></td><td class="px-3 py-2 text-muted">2BR long-dist</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">All synced calls with metadata from <code class="text-accent">call_summaries</code>. Row click → <code class="text-accent">/calls/[id]</code> with transcript playback.</p>
+</section>
+
+<!-- ============ 03 · SALES COMMAND CENTER ============ -->
+<section id="p3" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">03</span>
+    <h2 class="text-lg font-semibold">Sales Command Center</h2>
+    <span class="text-xs text-muted font-mono">/sales/command-center</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/sales/command-center</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 520px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>⌂</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>📅</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>✓</span></div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>↗</span><span>Sales</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>👥</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Sales / Command Center</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ New</button>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-2 gap-4 mb-5">
+            <div class="border border-border rounded-lg bg-panel">
+              <div class="px-4 py-2 border-b border-border text-xs font-semibold flex items-center justify-between">
+                <span>Today's calls</span><span class="text-muted text-[10px]">32 calls</span>
+              </div>
+              <div class="divide-y divide-border text-xs">
+                <div class="p-3 flex items-center gap-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">HOT</span><span class="font-medium">Jane D.</span><span class="text-muted">· local · 4:12 ·</span><span style="color:#22c55e">booked</span></div>
+                <div class="p-3 flex items-center gap-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">warm</span><span class="font-medium">Bob K.</span><span class="text-muted">· long-dist · 2:48 · follow-up</span></div>
+                <div class="p-3 flex items-center gap-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">HOT</span><span class="font-medium">M. Chen</span><span class="text-muted">· commercial · 6:41 ·</span><span style="color:#22c55e">quoted</span></div>
+                <div class="p-3 flex items-center gap-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">cold</span><span class="font-medium">A. Rivera</span><span class="text-muted">· studio · 1:22 · voicemail</span></div>
+                <div class="p-3 text-center text-muted text-[11px]">… 28 more</div>
+              </div>
+            </div>
+            <div class="border border-border rounded-lg bg-panel">
+              <div class="px-4 py-2 border-b border-border text-xs font-semibold flex items-center justify-between">
+                <span>Open opportunities</span><span class="text-muted text-[10px]">11 active</span>
+              </div>
+              <div class="divide-y divide-border text-xs">
+                <div class="p-3"><div class="flex items-center justify-between"><span class="font-mono text-[10px] text-muted">#1042</span><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">new</span></div><div class="font-medium">M. Pereira · 3BR local</div><div class="text-muted text-[10px] mt-0.5">$4,850 · 2026-04-22</div></div>
+                <div class="p-3"><div class="flex items-center justify-between"><span class="font-mono text-[10px] text-muted">#1041</span><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">quoted</span></div><div class="font-medium">ACME Office · Commercial</div><div class="text-muted text-[10px] mt-0.5">$12,400 · 2026-05-01</div></div>
+                <div class="p-3"><div class="flex items-center justify-between"><span class="font-mono text-[10px] text-muted">#1039</span><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">booked</span></div><div class="font-medium">Hadid Family · 4BR long-dist</div><div class="text-muted text-[10px] mt-0.5">$8,750 · 2026-05-04</div></div>
+                <div class="p-3 text-center text-muted text-[11px]">… 8 more</div>
+              </div>
+            </div>
+          </div>
+          <div class="border border-border rounded-lg bg-panel p-4">
+            <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Conversion funnel · Today</div>
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span class="px-3 py-1.5 rounded bg-accent/15 text-accent">Calls 32</span>
+              <span class="text-muted">→</span>
+              <span class="px-3 py-1.5 rounded bg-accent/15 text-accent">Leads 11</span>
+              <span class="text-muted">→</span>
+              <span class="px-3 py-1.5 rounded bg-accent/15 text-accent">Quoted 6</span>
+              <span class="text-muted">→</span>
+              <span class="px-3 py-1.5 rounded bg-green-500/15" style="color:#22c55e;">Booked 2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">The sales daily driver. Live call feed + open opportunities side by side, with a conversion funnel below.</p>
+</section>
+
+<!-- ============ 04 · ALL CUSTOMER PROFILES ============ -->
+<section id="p4" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">04</span>
+    <h2 class="text-lg font-semibold">All Customer Profiles</h2>
+    <span class="text-xs text-muted font-mono">/customers/all-profiles</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · 3,449 customers</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/customers/all-profiles</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 520px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>⌂</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>↗</span></div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>👥</span><span>Cust</span></div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>🚚</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Customers / All Profiles</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ New Customer</button>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 flex-wrap">
+            <input class="bg-panel border border-border rounded px-2 py-1 text-xs w-48" placeholder="Search by name" />
+            <input class="bg-panel border border-border rounded px-2 py-1 text-xs w-40" placeholder="Phone" />
+            <button class="text-[11px] px-2 py-1 rounded border border-accent bg-accent text-white">All</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">New</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Active</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Archived</button>
+            <select class="bg-panel border border-border rounded px-2 py-1 text-xs"><option>Brand: All</option><option>APM</option><option>AFM</option></select>
+            <span class="flex-1"></span>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Refresh</button>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Name</th><th class="text-left px-3 py-2">Phone</th><th class="text-left px-3 py-2">Email</th><th class="text-left px-3 py-2">Brand</th><th class="text-left px-3 py-2">Status</th><th class="text-left px-3 py-2">Created</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">Pereira, Maria</td><td class="px-3 py-2 font-mono">(206) 555-1284</td><td class="px-3 py-2">m@p.com</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">APM</span></td><td class="px-3 py-2" style="color:#22c55e;">active</td><td class="px-3 py-2 text-muted">2026-04-15</td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">ACME Office</td><td class="px-3 py-2 font-mono">(425) 555-8821</td><td class="px-3 py-2">ops@acme.com</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">crewready</span></td><td class="px-3 py-2" style="color:#7c5cff;">new</td><td class="px-3 py-2 text-muted">2026-04-14</td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">Hadid, S.</td><td class="px-3 py-2 font-mono">(253) 555-3127</td><td class="px-3 py-2">s.hadid@gmail.com</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">APM</span></td><td class="px-3 py-2" style="color:#22c55e;">active</td><td class="px-3 py-2 text-muted">2026-04-12</td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">Chen, Marcus</td><td class="px-3 py-2 font-mono">(206) 555-9912</td><td class="px-3 py-2">marcus@chen.io</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">apex</span></td><td class="px-3 py-2" style="color:#22c55e;">active</td><td class="px-3 py-2 text-muted">2026-04-11</td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">Rivera, Anna</td><td class="px-3 py-2 font-mono">(360) 555-4502</td><td class="px-3 py-2">a.rivera@yahoo.com</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">AFM</span></td><td class="px-3 py-2" style="color:#7c5cff;">new</td><td class="px-3 py-2 text-muted">2026-04-10</td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">Singh Family</td><td class="px-3 py-2 font-mono">(206) 555-7733</td><td class="px-3 py-2">contact@singh.fam</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">APM</span></td><td class="px-3 py-2 text-muted">archived</td><td class="px-3 py-2 text-muted">2026-03-28</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex justify-center mt-3"><button class="text-[11px] px-3 py-1.5 rounded-md border border-border">Load more (3,443 remaining)</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">EntityTable with name + phone search, status chips, brand select. Row click navigates to <code class="text-accent">/customers/[id]</code>.</p>
+</section>
+
+<!-- ============ 05 · CUSTOMER DETAIL ============ -->
+<section id="p5" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">05</span>
+    <h2 class="text-lg font-semibold">Customer Detail</h2>
+    <span class="text-xs text-muted font-mono">/customers/[id]</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · the heart of the CRM</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/customers/abc-123</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 560px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-link w-12 h-12 rounded flex flex-col items-center justify-center"><span>⌂</span></div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>👥</span><span>Cust</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Customers / </span><span class="font-medium">Pereira, Maria</span>
+          <span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">APM</span>
+          <span class="text-muted font-mono">(206) 555-1284</span>
+          <span class="text-muted">m@p.com</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">Send latest estimate</button>
+        </div>
+        <!-- subnav -->
+        <div class="h-9 border-b border-border bg-bg flex items-center px-4 gap-4 text-xs">
+          <span class="text-muted">Sales</span>
+          <span class="text-text border-b-2 border-accent pb-2">Estimate</span>
+          <span class="text-muted">Storage</span>
+          <span class="text-muted">Files</span>
+          <span class="text-muted">Accounting</span>
+          <span class="text-muted">Profitability</span>
+          <span class="text-muted">Claims</span>
+        </div>
+        <div class="flex">
+          <!-- left rail -->
+          <div class="w-56 border-r border-border p-4 space-y-3 text-xs">
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-1">Tags</div>
+              <div class="flex gap-1 flex-wrap"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">repeat</span><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">vip</span></div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-1">Address</div>
+              <div>123 Oak St</div><div>Seattle, WA 98103</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-1">Customer since</div>
+              <div>2024-08-12</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-1">Source</div>
+              <div>phone</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-1">Balance</div>
+              <div class="font-mono" style="color:#22c55e;">$0.00</div>
+            </div>
+          </div>
+          <!-- main + drawer -->
+          <div class="flex-1 flex">
+            <div class="flex-1 p-4">
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Activity feed</div>
+              <div class="space-y-2 text-xs">
+                <div class="border border-border bg-panel rounded p-3">
+                  <div class="flex items-center justify-between mb-1"><span class="font-medium">11:14 AM · Inbound call</span><span class="text-muted font-mono">4:12</span></div>
+                  <div class="text-muted">Customer asked about a 3BR local move on April 22. Quoted $4,850 verbally. Hot lead. Caller mentioned an elevator at origin.</div>
+                  <button class="mt-2 text-[10px] text-accent">▸ Show transcript</button>
+                </div>
+                <div class="border border-border bg-panel rounded p-3">
+                  <div class="flex items-center justify-between mb-1"><span class="font-medium">10:03 AM · Estimate sent</span><span class="text-muted">via email</span></div>
+                  <div class="text-muted">Quote #1042 emailed to <span class="font-mono">m@p.com</span></div>
+                </div>
+                <div class="border border-border bg-panel rounded p-3">
+                  <div class="flex items-center justify-between mb-1"><span class="font-medium">Yesterday · Note added</span></div>
+                  <div class="text-muted">Customer prefers morning slots. Has a small dog (friendly).</div>
+                </div>
+              </div>
+            </div>
+            <div class="w-64 border-l border-border p-4">
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Follow-ups</div>
+              <div class="space-y-2 text-xs">
+                <div class="border border-border bg-panel rounded p-2">
+                  <div class="font-medium">Today 2:00 PM</div>
+                  <div class="text-muted">Callback re: 4/22 booking</div>
+                </div>
+                <div class="border border-border bg-panel rounded p-2">
+                  <div class="font-medium">Tue 11:00 AM</div>
+                  <div class="text-muted">On-site survey</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Tabbed workspace (Sales / Estimate / Storage / Files / Accounting / Profitability / Claims), left-rail identity, activity feed with rich call cards, follow-up sidebar.</p>
+</section>
+
+<!-- ============ 06 · ALL OPPORTUNITIES ============ -->
+<section id="p6" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">06</span>
+    <h2 class="text-lg font-semibold">All Opportunities</h2>
+    <span class="text-xs text-muted font-mono">/customers/opportunities</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · 5,029 opportunities</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/customers/opportunities</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 460px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>👥</span><span>Cust</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Customers / Opportunities</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ New</button>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs text-muted">Status:</span>
+            <button class="text-[11px] px-2 py-1 rounded border border-accent bg-accent text-white">All</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">New</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Quoted</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Booked</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Lost</button>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Status</th><th class="text-left px-3 py-2">Customer</th><th class="text-left px-3 py-2">Type</th><th class="text-left px-3 py-2">Service Date</th><th class="text-right px-3 py-2">Amount</th><th class="text-left px-3 py-2">Source</th><th class="text-left px-3 py-2">Quality</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">new</span></td><td class="px-3 py-2 font-medium">Pereira, Maria</td><td class="px-3 py-2 text-muted">local</td><td class="px-3 py-2 font-mono">2026-04-22</td><td class="px-3 py-2 text-right font-mono">$4,850</td><td class="px-3 py-2 text-muted">phone</td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">hot</span></td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">quoted</span></td><td class="px-3 py-2 font-medium">ACME Office</td><td class="px-3 py-2 text-muted">commercial</td><td class="px-3 py-2 font-mono">2026-05-01</td><td class="px-3 py-2 text-right font-mono">$12,400</td><td class="px-3 py-2 text-muted">referral</td><td class="px-3 py-2 text-muted">—</td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">booked</span></td><td class="px-3 py-2 font-medium">Hadid, S.</td><td class="px-3 py-2 text-muted">long-distance</td><td class="px-3 py-2 font-mono">2026-05-04</td><td class="px-3 py-2 text-right font-mono">$8,750</td><td class="px-3 py-2 text-muted">google</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">warm</span></td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">new</span></td><td class="px-3 py-2 font-medium">Rivera, Anna</td><td class="px-3 py-2 text-muted">studio</td><td class="px-3 py-2 font-mono">2026-04-30</td><td class="px-3 py-2 text-right font-mono">$1,650</td><td class="px-3 py-2 text-muted">yelp</td><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">cold</span></td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">lost</span></td><td class="px-3 py-2 font-medium">Chen, Marcus</td><td class="px-3 py-2 text-muted">commercial</td><td class="px-3 py-2 font-mono">2026-04-25</td><td class="px-3 py-2 text-right font-mono">$6,200</td><td class="px-3 py-2 text-muted">phone</td><td class="px-3 py-2 text-muted">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Status-chip filtered list. Row click → OpportunityDrawer (right-slide 420px).</p>
+</section>
+
+<!-- ============ 07 · MY LEADS ============ -->
+<section id="p7" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">07</span>
+    <h2 class="text-lg font-semibold">My Leads</h2>
+    <span class="text-xs text-muted font-mono">/sales/my-leads</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · scoped to current user</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/sales/my-leads</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 420px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>↗</span><span>Sales</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Sales / My Leads</span>
+          <span class="flex-1"></span>
+          <span class="text-[10px] text-muted">Assigned to: <strong class="text-text">Shane F.</strong></span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs">
+            <span class="text-muted">Status:</span>
+            <button class="text-[11px] px-2 py-1 rounded border border-accent bg-accent text-white">All</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">New</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">In-progress</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Quoted</button>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Status</th><th class="text-left px-3 py-2">Customer</th><th class="text-left px-3 py-2">Service</th><th class="text-left px-3 py-2">Date</th><th class="text-right px-3 py-2">Amount</th><th class="text-left px-3 py-2">Last contact</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">new</span></td><td class="px-3 py-2 font-medium">Pereira, M.</td><td class="px-3 py-2 text-muted">local 3BR</td><td class="px-3 py-2 font-mono">2026-04-22</td><td class="px-3 py-2 text-right font-mono">$4,850</td><td class="px-3 py-2 text-muted">2h ago</td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">in-progress</span></td><td class="px-3 py-2 font-medium">ACME Office</td><td class="px-3 py-2 text-muted">commercial</td><td class="px-3 py-2 font-mono">2026-05-01</td><td class="px-3 py-2 text-right font-mono">$12,400</td><td class="px-3 py-2 text-muted">yesterday</td></tr>
+                <tr class="row"><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">quoted</span></td><td class="px-3 py-2 font-medium">Singh Family</td><td class="px-3 py-2 text-muted">long-dist 4BR</td><td class="px-3 py-2 font-mono">2026-05-08</td><td class="px-3 py-2 text-right font-mono">$11,200</td><td class="px-3 py-2 text-muted">3d ago</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Same EntityTable as the global opportunities list, filtered server-side to <code class="text-accent">assigned_to = current_user</code>.</p>
+</section>
+
+<!-- ============ 08 · FOLLOW-UPS QUEUE ============ -->
+<section id="p8" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">08</span>
+    <h2 class="text-lg font-semibold">Follow-ups Queue</h2>
+    <span class="text-xs text-muted font-mono">/sales/follow-ups</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/sales/follow-ups</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 400px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>↗</span><span>Sales</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Sales / Follow-ups</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ Follow-up</button>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs">
+            <button class="text-[11px] px-2 py-1 rounded border border-accent bg-accent text-white">Due today</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">Overdue</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">This week</button>
+            <button class="text-[11px] px-2 py-1 rounded border border-border">All</button>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Due</th><th class="text-left px-3 py-2">Customer</th><th class="text-left px-3 py-2">Title</th><th class="text-left px-3 py-2">Priority</th><th class="px-3 py-2"></th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2 font-mono">Today 2:00 PM</td><td class="px-3 py-2 font-medium">Pereira, M.</td><td class="px-3 py-2">Callback re: 4/22</td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">high</span></td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">Today 4:30 PM</td><td class="px-3 py-2 font-medium">Hadid, S.</td><td class="px-3 py-2">Confirm crew for Saturday</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">Wed 10:00 AM</td><td class="px-3 py-2 font-medium">ACME Office</td><td class="px-3 py-2">On-site walkthrough</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Tasks with <code class="text-accent">type="follow_up"</code> + future <code class="text-accent">due_at</code>. Quick-complete inline.</p>
+</section>
+
+<!-- ============ 09 · DISPATCH COMMAND CENTER ============ -->
+<section id="p9" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">09</span>
+    <h2 class="text-lg font-semibold">Dispatch Command Center</h2>
+    <span class="text-xs text-muted font-mono">/dispatch/command-center</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · F3 sprint</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/dispatch/command-center</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 540px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>🚚</span><span>Disp</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Dispatch / Command Center</span>
+        </div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-5 gap-3">
+            <div class="border border-border rounded-lg p-3 bg-panel"><div class="text-[10px] uppercase text-muted">Booked</div><div class="text-2xl font-semibold flex items-center gap-2"><span class="dot s-booked"></span>3</div></div>
+            <div class="border border-border rounded-lg p-3 bg-panel"><div class="text-[10px] uppercase text-muted">Confirmed</div><div class="text-2xl font-semibold flex items-center gap-2"><span class="dot s-confirmed"></span>1</div></div>
+            <div class="border border-border rounded-lg p-3 bg-panel"><div class="text-[10px] uppercase text-muted">En route</div><div class="text-2xl font-semibold flex items-center gap-2"><span class="dot s-en_route"></span>0</div></div>
+            <div class="border border-border rounded-lg p-3 bg-panel"><div class="text-[10px] uppercase text-muted">In progress</div><div class="text-2xl font-semibold flex items-center gap-2"><span class="dot s-in_progress"></span>2</div></div>
+            <div class="border border-border rounded-lg p-3 bg-panel"><div class="text-[10px] uppercase text-muted">Finished</div><div class="text-2xl font-semibold flex items-center gap-2"><span class="dot s-finished"></span>5</div></div>
+          </div>
+          <div class="flex items-center gap-2 border border-border rounded-lg p-2 bg-panel text-xs">
+            <span class="text-muted px-2">2 selected</span>
+            <button class="bg-accent text-white px-3 py-1 rounded text-[11px]">Send Customer Confirmation</button>
+            <button class="border border-border px-3 py-1 rounded text-[11px]">Send Crew Confirmation</button>
+            <span class="flex-1"></span>
+            <button class="border border-border px-3 py-1 rounded text-[11px]">Refresh</button>
+          </div>
+          <div class="border border-border rounded-lg bg-panel">
+            <div class="px-4 py-2 border-b border-border text-xs font-medium">Today's Jobs (4)</div>
+            <div class="divide-y divide-border text-xs">
+              <div class="px-4 py-3 flex items-center gap-3"><input type="checkbox" checked /><span class="dot s-confirmed"></span><span class="font-mono text-[10px] w-20">#42A8001</span><span class="flex-1 font-medium">Pereira, M.</span><span class="text-muted">local · 9-11am</span><button class="text-[11px] px-2 py-1 rounded border border-border flex items-center gap-1">crew 3 · Truck 17 ▾</button><span class="w-20 text-right">confirmed</span><button class="text-[10px] px-2 py-1 rounded border border-border">Advance</button></div>
+              <div class="px-4 py-3 flex items-center gap-3"><input type="checkbox" /><span class="dot s-booked"></span><span class="font-mono text-[10px] w-20">#43020042</span><span class="flex-1 font-medium">ACME Office</span><span class="text-muted">comm · 1-5pm</span><button class="text-[11px] px-2 py-1 rounded border border-border flex items-center gap-1">crew 0 · — ▾</button><span class="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700">no crew</span><span class="w-20 text-right">booked</span><button class="text-[10px] px-2 py-1 rounded border border-border">Advance</button></div>
+              <!-- expanded picker -->
+              <div class="px-4 py-3 bg-panel border-l-2 border-accent flex items-center gap-4 text-xs flex-wrap">
+                <div class="flex items-center gap-2"><span class="text-muted">Crew size</span><div class="inline-flex items-center border border-border rounded overflow-hidden"><button class="px-2 py-1">−</button><input class="w-12 text-center bg-bg" value="3" /><button class="px-2 py-1">+</button></div></div>
+                <div class="flex items-center gap-2"><span class="text-muted">Trucks</span><span class="px-2 py-1 rounded border border-accent bg-accent text-white">✓ Tk17</span><span class="px-2 py-1 rounded border border-border">Tk22</span><span class="px-2 py-1 rounded border border-border">Tk30</span></div>
+                <span class="flex-1"></span>
+                <button class="bg-accent text-white px-3 py-1.5 rounded">Save</button>
+                <button class="border border-border px-3 py-1.5 rounded">Close</button>
+              </div>
+              <div class="px-4 py-3 flex items-center gap-3"><input type="checkbox" checked /><span class="dot s-in_progress"></span><span class="font-mono text-[10px] w-20">#44190008</span><span class="flex-1 font-medium">Hadid, S.</span><span class="text-muted">local · 2pm-EOD</span><button class="text-[11px] px-2 py-1 rounded border border-border">crew 4 · Tk22 ▾</button><span class="w-20 text-right">in_progress</span><button class="text-[10px] px-2 py-1 rounded border border-border">Advance</button></div>
+              <div class="px-4 py-3 flex items-center gap-3"><input type="checkbox" /><span class="dot s-finished"></span><span class="font-mono text-[10px] w-20">#41880012</span><span class="flex-1 font-medium">Singh Family</span><span class="text-muted">long-dist · 7am</span><button class="text-[11px] px-2 py-1 rounded border border-border">crew 5 · Tk30+Tk31 ▾</button><span class="w-20 text-right">finished</span><button class="text-[10px] px-2 py-1 rounded border border-border">Advance</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Status strip across the top, bulk-action bar, today's job list with inline crew picker that expands below the row.</p>
+</section>
+
+<!-- ============ 10 · RECEIVABLES ============ -->
+<section id="p10" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">10</span>
+    <h2 class="text-lg font-semibold">Accounts Receivable</h2>
+    <span class="text-xs text-muted font-mono">/accounting/receivables</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · F4 sprint</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/accounting/receivables</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 480px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>$</span><span>Acct</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Accounting / Receivables</span>
+        </div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-4 gap-3">
+            <div class="border border-border rounded-lg p-4 bg-panel"><div class="text-[10px] uppercase text-muted">Outstanding</div><div class="text-2xl font-semibold mt-1 font-mono">$48,210</div></div>
+            <div class="border border-border rounded-lg p-4 bg-panel"><div class="text-[10px] uppercase text-muted">Overdue</div><div class="text-2xl font-semibold mt-1 font-mono" style="color:#ef4444;">$12,400</div></div>
+            <div class="border border-border rounded-lg p-4 bg-panel"><div class="text-[10px] uppercase text-muted">Paid this month</div><div class="text-2xl font-semibold mt-1 font-mono" style="color:#22c55e;">$84,500</div></div>
+            <div class="border border-border rounded-lg p-4 bg-panel"><div class="text-[10px] uppercase text-muted">Aging</div><div class="text-[11px] mt-1 text-muted">see rows below</div></div>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] border-y border-border py-2">
+            <span class="text-muted">Aging:</span>
+            <span class="px-2 py-0.5 rounded" style="background:rgba(34,197,94,0.15);color:#22c55e;">Current $35,810</span>
+            <span class="px-2 py-0.5 rounded" style="background:rgba(245,158,11,0.15);color:#f59e0b;">1-30d $7,200</span>
+            <span class="px-2 py-0.5 rounded" style="background:rgba(245,158,11,0.15);color:#f59e0b;">31-60d $3,400</span>
+            <span class="px-2 py-0.5 rounded" style="background:rgba(239,68,68,0.15);color:#ef4444;">61-90d $1,000</span>
+            <span class="px-2 py-0.5 rounded" style="background:rgba(239,68,68,0.15);color:#ef4444;">90+ $800</span>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Invoice #</th><th class="text-left px-3 py-2">Customer</th><th class="text-left px-3 py-2">Due</th><th class="text-right px-3 py-2">Balance</th><th class="text-left px-3 py-2">Status</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-mono">2026-0321</td><td class="px-3 py-2 font-medium">ACME Office</td><td class="px-3 py-2 font-mono">2026-03-12</td><td class="px-3 py-2 text-right font-mono" style="color:#ef4444;">$4,800</td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">overdue</span></td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-mono">2026-0415</td><td class="px-3 py-2 font-medium">Pereira, M.</td><td class="px-3 py-2 font-mono">2026-04-29</td><td class="px-3 py-2 text-right font-mono" style="color:#f59e0b;">$1,200</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">partial</span></td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-mono">2026-0418</td><td class="px-3 py-2 font-medium">Hadid, S.</td><td class="px-3 py-2 font-mono">2026-05-02</td><td class="px-3 py-2 text-right font-mono">$3,400</td><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">sent</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Summary cards + aging strip + invoice list. Rows are keyboard-navigable (<kbd>Enter</kbd>/<kbd>Space</kbd> opens detail).</p>
+</section>
+
+<!-- ============ 11 · INVOICE DETAIL ============ -->
+<section id="p11" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">11</span>
+    <h2 class="text-lg font-semibold">Invoice Detail</h2>
+    <span class="text-xs text-muted font-mono">/accounting/invoices/[id]</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · Stripe seam ready</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/accounting/invoices/2026-0321</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 540px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>$</span><span>Acct</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Accounting / Invoices / </span><span class="font-mono">#2026-0321</span>
+          <span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">overdue</span>
+          <span class="flex-1"></span>
+          <button class="border border-border px-3 py-1 rounded text-xs">Send</button>
+          <button class="border border-border px-3 py-1 rounded text-xs">PDF</button>
+        </div>
+        <div class="p-5">
+          <div class="text-xs text-muted mb-4">ACME Office · Due <span class="font-mono">2026-03-12</span> · Issued <span class="font-mono">2026-02-15</span></div>
+          <div class="grid grid-cols-3 gap-6">
+            <div class="col-span-2">
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Line items</div>
+              <div class="border border-border rounded overflow-hidden">
+                <table class="w-full text-xs">
+                  <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                    <tr><th class="text-left px-3 py-2">Description</th><th class="text-right px-3 py-2">Qty</th><th class="text-right px-3 py-2">Rate</th><th class="text-right px-3 py-2">Amount</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr class="row"><td class="px-3 py-2">Movers (per hour)</td><td class="px-3 py-2 text-right font-mono">24</td><td class="px-3 py-2 text-right font-mono">$175.00</td><td class="px-3 py-2 text-right font-mono">$4,200.00</td></tr>
+                    <tr class="row"><td class="px-3 py-2">Truck (per hour)</td><td class="px-3 py-2 text-right font-mono">6</td><td class="px-3 py-2 text-right font-mono">$125.00</td><td class="px-3 py-2 text-right font-mono">$750.00</td></tr>
+                    <tr class="row"><td class="px-3 py-2">Packing (flat)</td><td class="px-3 py-2 text-right font-mono">1</td><td class="px-3 py-2 text-right font-mono">$340.00</td><td class="px-3 py-2 text-right font-mono">$340.00</td></tr>
+                    <tr class="row"><td class="px-3 py-2">Long carry surcharge</td><td class="px-3 py-2 text-right font-mono">1</td><td class="px-3 py-2 text-right font-mono">$100.00</td><td class="px-3 py-2 text-right font-mono">$100.00</td></tr>
+                    <tr class="row"><td class="px-3 py-2 text-muted">Fuel (8%)</td><td class="px-3 py-2 text-right font-mono text-muted">—</td><td class="px-3 py-2 text-right font-mono text-muted">—</td><td class="px-3 py-2 text-right font-mono">$431.20</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-4 border border-border rounded p-4 bg-panel">
+                <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Record payment</div>
+                <div class="flex items-center gap-2 mb-3 text-xs">
+                  <label class="flex items-center gap-1"><input type="radio" checked />Cash</label>
+                  <label class="flex items-center gap-1"><input type="radio" />Check</label>
+                  <label class="flex items-center gap-1"><input type="radio" />ACH</label>
+                  <label class="flex items-center gap-1 text-muted"><input type="radio" disabled />Card <span class="text-[10px]">— Phase 4</span></label>
+                </div>
+                <div class="flex items-end gap-2">
+                  <div><label class="text-[10px] text-muted block mb-0.5">Amount</label><input class="bg-bg border border-border rounded px-2 py-1 text-xs w-32 font-mono" value="$4,800.00" /></div>
+                  <div><label class="text-[10px] text-muted block mb-0.5">Reference</label><input class="bg-bg border border-border rounded px-2 py-1 text-xs w-40" placeholder="Check #1284" /></div>
+                  <button class="bg-accent text-white px-3 py-1.5 rounded text-xs">Record $4,800</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-muted mb-2">Totals</div>
+              <div class="border border-border rounded p-4 bg-panel space-y-2 text-xs">
+                <div class="flex justify-between"><span>Subtotal</span><span class="font-mono">$5,390.00</span></div>
+                <div class="flex justify-between text-muted"><span>Discounts</span><span class="font-mono">$0.00</span></div>
+                <div class="flex justify-between text-muted"><span>Sales tax</span><span class="font-mono">$431.20</span></div>
+                <div class="flex justify-between font-semibold pt-2 border-t border-border"><span>Total</span><span class="font-mono">$13,120.00</span></div>
+                <div class="flex justify-between text-[11px] text-muted"><span>Paid</span><span class="font-mono">$8,320.00</span></div>
+                <div class="flex justify-between font-semibold" style="color:#ef4444;"><span>Balance</span><span class="font-mono">$4,800.00</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Detail header + line items + totals sidebar + inline PaymentRecorder. Card method visible-but-disabled with the Phase 4 tooltip.</p>
+</section>
+
+<!-- ============ 12 · JOBS QUEUE ============ -->
+<section id="p12" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">12</span>
+    <h2 class="text-lg font-semibold">Accounting / Jobs Queue</h2>
+    <span class="text-xs text-muted font-mono">/accounting/jobs/pending-finalize</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/accounting/jobs/pending-finalize</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 420px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>$</span><span>Acct</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Accounting / Jobs / Pending Finalize</span>
+        </div>
+        <!-- subnav -->
+        <div class="h-9 border-b border-border bg-bg flex items-center px-4 gap-4 text-xs">
+          <span class="text-text border-b-2 border-accent pb-2">Pending Finalize</span>
+          <span class="text-muted">Pending Close</span>
+          <span class="text-muted">Closed</span>
+          <span class="text-muted">All</span>
+        </div>
+        <div class="p-5">
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Customer</th><th class="text-left px-3 py-2">Job #</th><th class="text-left px-3 py-2">Service date</th><th class="text-left px-3 py-2">Status</th><th class="text-right px-3 py-2">Actions</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2 font-medium">Pereira, M.</td><td class="px-3 py-2 font-mono">#42A8001</td><td class="px-3 py-2 font-mono">2026-04-22</td><td class="px-3 py-2"><span class="pill" style="background:rgba(156,163,175,0.15);color:#9ca3af;">finished</span></td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-1 rounded border border-accent bg-accent text-white">Generate invoice</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-medium">Singh Family</td><td class="px-3 py-2 font-mono">#41880012</td><td class="px-3 py-2 font-mono">2026-04-19</td><td class="px-3 py-2"><span class="pill" style="background:rgba(156,163,175,0.15);color:#9ca3af;">finished</span></td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-1 rounded border border-accent bg-accent text-white">Generate invoice</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-medium">Hadid, S.</td><td class="px-3 py-2 font-mono">#44190008</td><td class="px-3 py-2 font-mono">2026-04-21</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">in_progress</span></td><td class="px-3 py-2 text-right text-muted">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Tabbed sub-nav across the 4 status buckets. "Generate invoice" row action POSTs <code class="text-accent">/api/invoices/generate</code> and routes to invoice detail.</p>
+</section>
+
+<!-- ============ 13 · TEAM CALENDAR ============ -->
+<section id="p13" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">13</span>
+    <h2 class="text-lg font-semibold">Team Calendar</h2>
+    <span class="text-xs text-muted font-mono">/calendars/team</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · F2 sprint · FullCalendar</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/calendars/team</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 540px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>📅</span><span>Cal</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Calendars / Team</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs flex-wrap">
+            <select class="bg-panel border border-border rounded px-2 py-1"><option>All users</option></select>
+            <select class="bg-panel border border-border rounded px-2 py-1"><option>All branches</option></select>
+            <button class="px-2 py-1 rounded border border-accent bg-accent text-white text-[11px]">All types</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">On-site</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">Virtual</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">Phone</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">Box</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">LiveSwitch</button>
+            <button class="px-2 py-1 rounded border border-border text-[11px]">Other</button>
+            <span class="flex-1"></span>
+            <div class="flex gap-1">
+              <button class="px-2 py-1 rounded border border-border text-[11px]">Month</button>
+              <button class="px-2 py-1 rounded border border-accent bg-accent text-white text-[11px]">Week</button>
+              <button class="px-2 py-1 rounded border border-border text-[11px]">Day</button>
+            </div>
+          </div>
+          <div class="border border-border rounded overflow-hidden text-[10px]">
+            <div class="grid grid-cols-8 bg-panel">
+              <div class="px-2 py-1.5 text-muted"></div>
+              <div class="px-2 py-1.5 text-center font-medium">Mon 21</div>
+              <div class="px-2 py-1.5 text-center font-medium">Tue 22</div>
+              <div class="px-2 py-1.5 text-center font-medium">Wed 23</div>
+              <div class="px-2 py-1.5 text-center font-medium">Thu 24</div>
+              <div class="px-2 py-1.5 text-center font-medium">Fri 25</div>
+              <div class="px-2 py-1.5 text-center font-medium">Sat 26</div>
+              <div class="px-2 py-1.5 text-center font-medium">Sun 27</div>
+            </div>
+            <!-- 6 rows for hours -->
+            <div class="grid grid-cols-8" style="grid-template-rows: repeat(6, 60px);">
+              <!-- column labels -->
+              <div class="border-t border-border px-2 py-1 text-muted">8am</div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border relative"><div class="absolute inset-1 rounded bg-blue-500/20 border border-blue-500/30 px-1.5 py-1 text-blue-400">Survey ACME</div></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+
+              <div class="border-t border-border px-2 py-1 text-muted">9am</div>
+              <div class="border-t border-l border-border relative"><div class="absolute inset-1 rounded bg-pink-500/20 border border-pink-500/30 px-1.5 py-1" style="color:#ec4899;">LiveSwitch · M.P.</div></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+
+              <div class="border-t border-border px-2 py-1 text-muted">10am</div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border relative"><div class="absolute inset-1 rounded bg-green-500/20 border border-green-500/30 px-1.5 py-1" style="color:#22c55e;">Box delivery</div></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+
+              <div class="border-t border-border px-2 py-1 text-muted">11am</div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border relative"><div class="absolute inset-1 rounded bg-amber-500/20 border border-amber-500/30 px-1.5 py-1" style="color:#f59e0b;">Phone survey</div></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+
+              <div class="border-t border-border px-2 py-1 text-muted">12pm</div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+
+              <div class="border-t border-border px-2 py-1 text-muted">1pm</div>
+              <div class="border-t border-l border-border relative"><div class="absolute inset-1 rounded bg-blue-500/20 border border-blue-500/30 px-1.5 py-1 text-blue-400">On-site est</div></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+              <div class="border-t border-l border-border"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">FullCalendar (week view shown). User/branch/type filters above. Drag-to-reschedule fires PATCH; click event opens drawer.</p>
+</section>
+
+<!-- ============ 14 · MY CALENDAR ============ -->
+<section id="p14" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">14</span>
+    <h2 class="text-lg font-semibold">My Calendar</h2>
+    <span class="text-xs text-muted font-mono">/calendars/mine</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">server→client · live · scoped to current user</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/calendars/mine</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 380px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>📅</span><span>Cal</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Calendars / Mine</span>
+          <span class="flex-1"></span>
+          <span class="text-[10px] text-muted">Owner: <strong class="text-text">Shane F.</strong></span>
+        </div>
+        <div class="p-10 flex items-center justify-center">
+          <div class="text-center max-w-md border border-dashed border-border rounded-lg p-8 bg-panel">
+            <div class="text-3xl mb-3">📅</div>
+            <div class="font-semibold mb-1">Nothing on your calendar yet</div>
+            <div class="text-xs text-muted mb-4">When you schedule a survey, book a follow-up, or an estimate gets signed, it appears here.</div>
+            <button class="border border-border bg-panel text-text px-3 py-1.5 rounded text-xs">Open tasks</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Server component fetches the current user, client renders FullCalendar scoped to <code class="text-accent">owner_id = me</code>. Signed-out fallback shows a neutral empty state with a Sign-in CTA.</p>
+</section>
+
+<!-- ============ 15 · FOLLOW-UPS CALENDAR ============ -->
+<section id="p15" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">15</span>
+    <h2 class="text-lg font-semibold">Follow-ups Calendar</h2>
+    <span class="text-xs text-muted font-mono">/calendars/follow-ups</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · month grid</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/calendars/follow-ups</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 480px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>📅</span><span>Cal</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Calendars / Follow-ups</span>
+          <span class="flex-1"></span>
+          <a href="#" class="text-[11px] text-muted hover:text-text underline underline-offset-2">View all open tasks →</a>
+        </div>
+        <div class="p-5">
+          <!-- month grid -->
+          <div class="border border-border rounded overflow-hidden text-[10px]">
+            <div class="grid grid-cols-7 bg-panel text-center font-medium">
+              <div class="px-2 py-1.5">Mon</div><div class="px-2 py-1.5">Tue</div><div class="px-2 py-1.5">Wed</div><div class="px-2 py-1.5">Thu</div><div class="px-2 py-1.5">Fri</div><div class="px-2 py-1.5 text-muted">Sat</div><div class="px-2 py-1.5 text-muted">Sun</div>
+            </div>
+            <div class="grid grid-cols-7" style="grid-template-rows: repeat(4, 90px);">
+              <!-- week 1 -->
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">14</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">15</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">Pereira CB</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">16</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">17</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">ACME tour</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">18</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">19</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">20</div></div>
+              <!-- week 2 (current) -->
+              <div class="border-t border-l border-border p-1.5"><div class="font-semibold">21</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">Pereira CB 2pm</div></div>
+              <div class="border-t border-l border-border p-1.5 bg-accent/5"><div class="font-semibold text-accent">22</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">Hadid confirm</div></div>
+              <div class="border-t border-l border-border p-1.5"><div>23</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">ACME walk</div></div>
+              <div class="border-t border-l border-border p-1.5"><div>24</div></div>
+              <div class="border-t border-l border-border p-1.5"><div>25</div><div class="mt-1 px-1 py-0.5 rounded bg-accent/10 text-accent text-[9px] truncate">Singh quote</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">26</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">27</div></div>
+              <!-- week 3 -->
+              <div class="border-t border-l border-border p-1.5"><div>28</div></div>
+              <div class="border-t border-l border-border p-1.5"><div>29</div></div>
+              <div class="border-t border-l border-border p-1.5"><div>30</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">May 1</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">2</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">3</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">4</div></div>
+              <!-- week 4 -->
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">5</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">6</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">7</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">8</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">9</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">10</div></div>
+              <div class="border-t border-l border-border p-1.5"><div class="text-muted">11</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Month grid scoped to <code class="text-accent">event_type=other</code> + <code class="text-accent">related_type=task</code>. Plain unscheduled tasks live in <code class="text-accent">/tasks/open</code>.</p>
+</section>
+
+<!-- ============ 16 · OPEN TASKS ============ -->
+<section id="p16" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">16</span>
+    <h2 class="text-lg font-semibold">Open Tasks</h2>
+    <span class="text-xs text-muted font-mono">/tasks/open</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/tasks/open</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 420px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>✓</span><span>Tasks</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Tasks / Open</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ Task</button>
+        </div>
+        <div class="h-9 border-b border-border bg-bg flex items-center px-4 gap-4 text-xs">
+          <span class="text-text border-b-2 border-accent pb-2">Open</span>
+          <span class="text-muted">Due Today</span>
+          <span class="text-muted">Overdue</span>
+          <span class="text-muted">Completed</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs">
+            <input class="bg-panel border border-border rounded px-2 py-1 text-xs w-48" placeholder="Search" />
+            <select class="bg-panel border border-border rounded px-2 py-1 text-xs"><option>Priority: All</option></select>
+            <select class="bg-panel border border-border rounded px-2 py-1 text-xs"><option>Type: All</option></select>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Due</th><th class="text-left px-3 py-2">Title</th><th class="text-left px-3 py-2">Type</th><th class="text-left px-3 py-2">Priority</th><th class="text-left px-3 py-2">Related</th><th class="px-3 py-2"></th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2 font-mono">Today 2pm</td><td class="px-3 py-2 font-medium">Call Pereira</td><td class="px-3 py-2 text-muted">call</td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">high</span></td><td class="px-3 py-2 text-accent text-[11px]">Opp #1042 →</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">Tomorrow 9am</td><td class="px-3 py-2 font-medium">Prep ACME survey</td><td class="px-3 py-2 text-muted">task</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2 text-accent text-[11px]">Cust ACME →</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">Wed 10am</td><td class="px-3 py-2 font-medium">Walkthrough w/ ACME</td><td class="px-3 py-2 text-muted">follow_up</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2 text-accent text-[11px]">Opp #1041 →</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-mono">Fri 4pm</td><td class="px-3 py-2 font-medium">Email Singh quote</td><td class="px-3 py-2 text-muted">email</td><td class="px-3 py-2"><span class="pill" style="background:rgba(59,130,246,0.15);color:#3b82f6;">low</span></td><td class="px-3 py-2 text-accent text-[11px]">Opp #1038 →</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Complete</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Sub-nav across the 4 task buckets. Inline complete action; related-record links jump to the source.</p>
+</section>
+
+<!-- ============ 17 · ACTIVE TICKETS ============ -->
+<section id="p17" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">17</span>
+    <h2 class="text-lg font-semibold">Active Tickets</h2>
+    <span class="text-xs text-muted font-mono">/customer-service/tickets/active</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · +S sprint</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/customer-service/tickets/active</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 460px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>🎧</span><span>CS</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Customer Service / Tickets / Active</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ Ticket</button>
+        </div>
+        <div class="h-9 border-b border-border bg-bg flex items-center px-4 gap-4 text-xs">
+          <span class="text-text border-b-2 border-accent pb-2">Active</span>
+          <span class="text-muted">Completed</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs flex-wrap">
+            <input class="bg-panel border border-border rounded px-2 py-1 w-48" placeholder="Search by name" />
+            <input class="bg-panel border border-border rounded px-2 py-1 w-40" placeholder="Assignee" />
+            <select class="bg-panel border border-border rounded px-2 py-1"><option>Type: All</option></select>
+            <button class="px-2 py-1 rounded border border-border">low</button>
+            <button class="px-2 py-1 rounded border border-border">med</button>
+            <button class="px-2 py-1 rounded border border-accent bg-accent text-white">high</button>
+            <button class="px-2 py-1 rounded border border-border">crit</button>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Ticket</th><th class="text-left px-3 py-2">Type</th><th class="text-left px-3 py-2">Pri</th><th class="text-left px-3 py-2">Assigned</th><th class="text-left px-3 py-2">Opened</th><th class="px-3 py-2"></th></tr>
+              </thead>
+              <tbody>
+                <tr class="row"><td class="px-3 py-2 font-medium">Damage to couch — laundry room</td><td class="px-3 py-2 text-muted">damage</td><td class="px-3 py-2"><span class="pill" style="background:rgba(239,68,68,0.15);color:#ef4444;">high</span></td><td class="px-3 py-2">Jamie</td><td class="px-3 py-2 text-muted font-mono">2026-04-19</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Close</button> <button class="text-[10px] px-2 py-0.5 rounded border border-red-500/40 text-red-500">Escalate</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-medium">Missing box — overnight</td><td class="px-3 py-2 text-muted">inquiry</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2">Chris</td><td class="px-3 py-2 text-muted font-mono">2026-04-20</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Close</button> <button class="text-[10px] px-2 py-0.5 rounded border border-red-500/40 text-red-500">Escalate</button></td></tr>
+                <tr class="row"><td class="px-3 py-2 font-medium">Billing dispute on invoice 0321</td><td class="px-3 py-2 text-muted">billing</td><td class="px-3 py-2"><span class="pill" style="background:rgba(245,158,11,0.15);color:#f59e0b;">med</span></td><td class="px-3 py-2">Shane</td><td class="px-3 py-2 text-muted font-mono">2026-04-18</td><td class="px-3 py-2 text-right"><button class="text-[10px] px-2 py-0.5 rounded border border-border">Close</button> <button class="text-[10px] px-2 py-0.5 rounded border border-red-500/40 text-red-500">Escalate</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Search by ticket name + assignee. Type select. Priority chip toggles. Inline close/escalate.</p>
+</section>
+
+<!-- ============ 18 · TARIFF LIBRARY ============ -->
+<section id="p18" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">18</span>
+    <h2 class="text-lg font-semibold">Tariff Library</h2>
+    <span class="text-xs text-muted font-mono">/settings/tariffs/library</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · Phase 1</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/settings/tariffs/library</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 420px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>⚙</span><span>Set</span></div>
+      </aside>
+      <div class="flex-1">
+        <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+          <span class="text-muted">Settings / Tariffs / Library</span>
+          <span class="flex-1"></span>
+          <button class="bg-accent text-white px-2.5 py-1 rounded text-xs">+ Tariff</button>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-3 text-xs">
+            <input class="bg-panel border border-border rounded px-2 py-1 w-48" placeholder="Search" />
+            <select class="bg-panel border border-border rounded px-2 py-1"><option>Branch: All</option></select>
+            <select class="bg-panel border border-border rounded px-2 py-1"><option>Service: All</option></select>
+            <label class="flex items-center gap-1 text-muted"><input type="checkbox" /> Show archived</label>
+          </div>
+          <div class="border border-border rounded overflow-hidden">
+            <table class="w-full text-xs">
+              <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                <tr><th class="text-left px-3 py-2">Name</th><th class="text-left px-3 py-2">Branch</th><th class="text-left px-3 py-2">Service</th><th class="text-left px-3 py-2">Effective</th><th class="text-right px-3 py-2">Rates</th><th class="text-left px-3 py-2">Status</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">APM Standard</td><td class="px-3 py-2">APM</td><td class="px-3 py-2 text-muted">local</td><td class="px-3 py-2 font-mono">2026-01-01</td><td class="px-3 py-2 text-right font-mono">12</td><td class="px-3 py-2"><span class="pill" style="background:rgba(124,92,255,0.1);color:#7c5cff;">default</span></td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">AFM Commercial</td><td class="px-3 py-2">AFM</td><td class="px-3 py-2 text-muted">commercial</td><td class="px-3 py-2 font-mono">2026-01-01</td><td class="px-3 py-2 text-right font-mono">8</td><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">active</span></td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">APM Long-distance</td><td class="px-3 py-2">APM</td><td class="px-3 py-2 text-muted">long-distance</td><td class="px-3 py-2 font-mono">2026-01-01</td><td class="px-3 py-2 text-right font-mono">10</td><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">active</span></td></tr>
+                <tr class="row cursor-pointer"><td class="px-3 py-2 font-medium">crewready Labor-only</td><td class="px-3 py-2">crewready</td><td class="px-3 py-2 text-muted">labor_only</td><td class="px-3 py-2 font-mono">2025-09-01</td><td class="px-3 py-2 text-right font-mono">3</td><td class="px-3 py-2"><span class="pill" style="background:rgba(34,197,94,0.15);color:#22c55e;">active</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">All pricing configurations per branch + service type. Row click → detail editor (next).</p>
+</section>
+
+<!-- ============ 19 · TARIFF EDITOR ============ -->
+<section id="p19" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">19</span>
+    <h2 class="text-lg font-semibold">Tariff Editor (with live preview)</h2>
+    <span class="text-xs text-muted font-mono">/settings/tariffs/library/[id]</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · F6 sprint</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/settings/tariffs/library/abc-123</div>
+    </div>
+    <div class="flex bg-bg" style="min-height: 600px;">
+      <aside class="w-[60px] bg-panel border-r border-border flex flex-col items-center py-3 gap-2 text-[10px]">
+        <div class="w-7 h-7 rounded bg-accent text-white flex items-center justify-center font-bold text-xs mb-2">CS</div>
+        <div class="nav-active w-12 h-12 rounded flex flex-col items-center justify-center gap-0.5"><span>⚙</span><span>Set</span></div>
+      </aside>
+      <div class="flex-1 flex">
+        <div class="flex-1 overflow-y-auto">
+          <div class="h-12 border-b border-border bg-panel flex items-center px-4 gap-3 text-xs">
+            <a href="#" class="text-accent">← Back</a>
+            <span class="text-muted">Tariffs / </span>
+            <span class="font-medium">APM Standard</span>
+          </div>
+          <div class="p-5 space-y-5">
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div><label class="text-[10px] text-muted block mb-1">Name</label><input class="bg-panel border border-border rounded px-2 py-1 w-full" value="APM Standard" /></div>
+              <div><label class="text-[10px] text-muted block mb-1">Branch</label><select class="bg-panel border border-border rounded px-2 py-1 w-full"><option>APM</option></select></div>
+              <div><label class="text-[10px] text-muted block mb-1">Service type</label><select class="bg-panel border border-border rounded px-2 py-1 w-full"><option>Local Move</option></select></div>
+              <div><label class="text-[10px] text-muted block mb-1">Effective from</label><input class="bg-panel border border-border rounded px-2 py-1 w-full font-mono" value="2026-01-01" /></div>
+              <div><label class="text-[10px] text-muted block mb-1">Rounding</label><select class="bg-panel border border-border rounded px-2 py-1 w-full"><option>Nearest cent</option></select></div>
+              <div><label class="text-[10px] text-muted block mb-1">Default</label><label class="flex items-center gap-2 pt-1"><input type="checkbox" checked /> Use as default</label></div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold mb-2">Base rates</h3>
+              <div class="border border-border rounded overflow-hidden text-xs">
+                <table class="w-full">
+                  <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                    <tr><th class="text-left px-3 py-2">Kind</th><th class="text-left px-3 py-2">Label</th><th class="text-right px-3 py-2">Base rate</th><th class="text-right px-3 py-2">Min</th><th class="text-left px-3 py-2">Unit</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr class="row"><td class="px-3 py-2">labor</td><td class="px-3 py-2">Movers</td><td class="px-3 py-2 text-right font-mono">$175.00</td><td class="px-3 py-2 text-right font-mono">$525</td><td class="px-3 py-2 text-muted">hour</td></tr>
+                    <tr class="row"><td class="px-3 py-2">truck</td><td class="px-3 py-2">Truck</td><td class="px-3 py-2 text-right font-mono">$125.00</td><td class="px-3 py-2 text-right font-mono">—</td><td class="px-3 py-2 text-muted">hour</td></tr>
+                    <tr class="row"><td class="px-3 py-2">packing</td><td class="px-3 py-2">Packing</td><td class="px-3 py-2 text-right font-mono">$75.00</td><td class="px-3 py-2 text-right font-mono">—</td><td class="px-3 py-2 text-muted">flat</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <button class="mt-2 text-[11px] px-2 py-1 rounded border border-border">+ Add rate</button>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold mb-2">Modifiers</h3>
+              <div class="border border-border rounded overflow-hidden text-xs">
+                <table class="w-full">
+                  <thead class="bg-accent/5 text-[10px] uppercase tracking-wide text-muted">
+                    <tr><th class="text-left px-3 py-2">Kind</th><th class="text-left px-3 py-2">Formula</th><th class="text-right px-3 py-2">Stacking</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr class="row"><td class="px-3 py-2">fuel_surcharge</td><td class="px-3 py-2 font-mono text-[11px]">{ type: percentage, value: 8 }</td><td class="px-3 py-2 text-right font-mono">10</td></tr>
+                    <tr class="row"><td class="px-3 py-2">weekend</td><td class="px-3 py-2 font-mono text-[11px]">{ type: percentage, value: 15 }</td><td class="px-3 py-2 text-right font-mono">20</td></tr>
+                    <tr class="row"><td class="px-3 py-2">stairs</td><td class="px-3 py-2 font-mono text-[11px]">{ type: per_flight, value: 75 }</td><td class="px-3 py-2 text-right font-mono">30</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold mb-2">Resolver preview</h3>
+              <div class="border border-border rounded p-4 bg-panel space-y-3 text-xs">
+                <div class="text-muted text-[11px]">Pick a sample context. The engine picks the winning tariff for each combination using assignment rules across every tariff in your library.</div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div><label class="text-[10px] text-muted block mb-1">Branch</label><select class="bg-bg border border-border rounded px-2 py-1 w-full"><option>APM</option></select></div>
+                  <div><label class="text-[10px] text-muted block mb-1">Service type</label><select class="bg-bg border border-border rounded px-2 py-1 w-full"><option>Local Move</option></select></div>
+                  <div><label class="text-[10px] text-muted block mb-1">Opp type</label><select class="bg-bg border border-border rounded px-2 py-1 w-full"><option>Residential</option></select></div>
+                </div>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(34,197,94,0.1);color:#22c55e;border-color:rgba(34,197,94,0.3);">
+                  ✓ This tariff wins for this context.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="w-80 border-l border-border bg-panel p-4 overflow-y-auto">
+          <div class="text-sm font-semibold mb-3">Pricing preview</div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between"><span class="text-muted">Movers</span><div class="flex items-center gap-1"><button class="border border-border w-6 h-6 rounded">−</button><span class="font-mono w-6 text-center">3</span><button class="border border-border w-6 h-6 rounded">+</button></div></div>
+            <div class="flex items-center justify-between"><span class="text-muted">Trucks</span><div class="flex items-center gap-1"><button class="border border-border w-6 h-6 rounded">−</button><span class="font-mono w-6 text-center">1</span><button class="border border-border w-6 h-6 rounded">+</button></div></div>
+            <div class="flex items-center justify-between"><span class="text-muted">Hours</span><div class="flex items-center gap-1"><button class="border border-border w-6 h-6 rounded">−</button><span class="font-mono w-6 text-center">6</span><button class="border border-border w-6 h-6 rounded">+</button></div></div>
+            <div class="flex items-center justify-between"><span class="text-muted">Day</span><select class="bg-bg border border-border rounded px-1 py-0.5"><option>Sat</option></select></div>
+            <hr class="border-border my-2" />
+            <div class="text-[10px] uppercase text-muted">Result</div>
+            <div class="space-y-1 font-mono text-[11px]">
+              <div class="flex justify-between"><span>Labor 6×3 @175</span><span>$3,150.00</span></div>
+              <div class="flex justify-between"><span>Truck 6 @125</span><span>$750.00</span></div>
+              <div class="flex justify-between"><span>Packing flat</span><span>$75.00</span></div>
+              <div class="flex justify-between text-muted"><span>Weekend +15%</span><span>$596.25</span></div>
+              <div class="flex justify-between text-muted"><span>Fuel +8%</span><span>$365.70</span></div>
+            </div>
+            <hr class="border-border my-2" />
+            <div class="flex justify-between font-semibold"><span>Total</span><span class="font-mono">$4,936.95</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">Full editor (rates, modifiers, valuations, handicaps, assignments) + the live <strong>Resolver Preview</strong> + right-pane <strong>Pricing Preview</strong> recomputing as you tweak inputs.</p>
+</section>
+
+<!-- ============ 20 · PUBLIC ESTIMATE (LIGHT THEME) ============ -->
+<section id="p20" class="scroll-mt">
+  <div class="mb-3 flex items-baseline gap-3">
+    <span class="text-accent font-mono text-xs">20</span>
+    <h2 class="text-lg font-semibold">Public Estimate (customer-facing, light theme)</h2>
+    <span class="text-xs text-muted font-mono">/estimate/[id]?t=&lt;HMAC&gt;</span>
+    <span class="text-[11px] uppercase tracking-wider text-muted">client · live · D2 sprint · the ONLY light surface</span>
+  </div>
+
+  <div class="browser-frame rounded-lg overflow-hidden border border-border">
+    <div class="bg-panel border-b border-border px-4 py-2 flex items-center gap-3 text-xs">
+      <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+      <div class="flex-1 text-center text-muted font-mono text-[11px]">callscraper.com/crm/estimate/abc-123?t=v1.eyJ...</div>
+    </div>
+    <div class="light-mockup p-8" style="min-height: 700px;">
+      <div class="max-w-3xl mx-auto light-card border rounded-lg shadow-sm overflow-hidden">
+        <!-- header -->
+        <div class="px-8 py-6 border-b light-border flex items-start justify-between">
+          <div>
+            <div class="font-semibold text-lg">A PERFECT MOVER</div>
+            <div class="text-xs light-muted mt-1">1234 Market St, Seattle</div>
+            <div class="text-xs light-muted">(206) 555-0100</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold" style="color:#374151;">ESTIMATE</div>
+            <div class="text-sm light-muted mt-1">#1042</div>
+            <div class="text-xs" style="color:#9ca3af;">Valid until 2026-05-01</div>
+          </div>
+        </div>
+        <!-- details -->
+        <div class="px-8 py-6">
+          <div class="grid grid-cols-2 gap-6 mb-6 text-sm">
+            <div>
+              <div class="text-[10px] uppercase tracking-wide light-muted mb-1">Customer</div>
+              <div class="font-medium">Maria Pereira</div>
+              <div class="text-xs light-muted">m@p.com</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-wide light-muted mb-1">Service</div>
+              <div class="text-sm">Date: 2026-04-22</div>
+              <div class="text-xs light-muted">From: 123 Oak St, Seattle</div>
+              <div class="text-xs light-muted">To: 456 Elm Ave, Bellevue</div>
+            </div>
+          </div>
+          <table class="w-full text-sm mb-4">
+            <thead class="border-b-2" style="border-color:#d1d5db;">
+              <tr><th class="text-left py-2">Description</th><th class="text-right py-2 w-20">Qty</th><th class="text-right py-2 w-24">Rate</th><th class="text-right py-2 w-28">Amount</th></tr>
+            </thead>
+            <tbody>
+              <tr class="border-b" style="border-color:#f3f4f6;"><td class="py-2">Movers (per hour)</td><td class="text-right font-mono">6</td><td class="text-right font-mono">$175.00</td><td class="text-right font-mono">$1,050.00</td></tr>
+              <tr class="border-b" style="border-color:#f3f4f6;"><td class="py-2">Truck (per hour)</td><td class="text-right font-mono">6</td><td class="text-right font-mono">$125.00</td><td class="text-right font-mono">$750.00</td></tr>
+              <tr class="border-b" style="border-color:#f3f4f6;"><td class="py-2">Packing (flat)</td><td class="text-right font-mono">1</td><td class="text-right font-mono">$340.00</td><td class="text-right font-mono">$340.00</td></tr>
+            </tbody>
+          </table>
+          <div class="ml-auto w-64 space-y-1 text-sm">
+            <div class="flex justify-between"><span>Subtotal</span><span class="font-mono">$2,140.00</span></div>
+            <div class="flex justify-between light-muted"><span>Sales tax</span><span class="font-mono">$187.25</span></div>
+            <div class="flex justify-between pt-2 border-t font-bold text-base" style="border-color:#d1d5db;"><span>Total</span><span class="font-mono">$2,327.25</span></div>
+          </div>
+          <div class="mt-8 pt-6 border-t light-border space-y-4">
+            <a href="#" class="text-blue-600 text-sm inline-flex items-center gap-2 hover:underline">⬇ Download PDF</a>
+            <div class="border light-border rounded p-4" style="background:#f3f4f6;">
+              <h2 class="text-sm font-semibold mb-3">Accept &amp; sign this estimate</h2>
+              <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label class="text-xs light-muted block mb-1">Full name *</label>
+                  <input class="w-full text-sm bg-white border light-border rounded px-2 py-1.5" value="Maria Pereira" />
+                </div>
+                <div>
+                  <label class="text-xs light-muted block mb-1">Email (optional)</label>
+                  <input class="w-full text-sm bg-white border light-border rounded px-2 py-1.5" value="m@p.com" />
+                </div>
+              </div>
+              <div class="border light-border rounded bg-white" style="height:140px;">
+                <div class="h-full flex items-center justify-center light-muted text-xs">(signature canvas — touch / mouse)</div>
+              </div>
+              <div class="flex items-center justify-between mt-2 text-xs light-muted">
+                <span>Sign above</span><span>Clear ⌫</span>
+              </div>
+              <button class="mt-3 inline-flex items-center gap-2 bg-green-600 text-white text-sm px-4 py-2 rounded">✓ Accept &amp; sign</button>
+              <p class="text-xs light-muted mt-2">By signing, you agree to the terms of this estimate.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="mt-3 text-xs text-muted">The only customer-facing surface. Light theme is intentional — customers are outside the dark-chrome context. <code class="text-accent">Referrer-Policy: no-referrer</code> HTTP header blocks the HMAC token from leaking on outbound clicks.</p>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="border-t border-border mt-16 py-8 text-center text-xs text-muted">
+  <div class="max-w-7xl mx-auto px-8 space-y-2">
+    <div>CallscraperCRM v1.1 · Phase 3.5 polish complete</div>
+    <div>This tour is paired with <code class="text-accent">docs/DESIGNER_HANDOFF.md</code>. For the technical contract, see <code class="text-accent">INTEGRATION.md</code>.</div>
+    <div class="pt-2">Hand this file directly to the callscraper.com designer — open in any browser, print to PDF, or email as an attachment.</div>
+  </div>
+</footer>
+
+</main>
+
+</body>
+</html>
