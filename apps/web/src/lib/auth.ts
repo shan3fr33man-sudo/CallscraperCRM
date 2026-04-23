@@ -17,13 +17,19 @@ export async function getOrgId(): Promise<string> {
     const { data: userRes, error } = await sb.auth.getUser();
     if (error || !userRes?.user) return DEFAULT_ORG_ID;
 
-    const { data: membership } = await sb
+    // A user may belong to multiple orgs (e.g., they were migrated into the
+    // default workspace while still holding their original tenant). Until
+    // there's an explicit active-org cookie, pick the most-recent membership
+    // so `.maybeSingle()` can't silently fail on >1 rows.
+    const { data: memberships } = await sb
       .from("memberships")
       .select("org_id")
       .eq("user_id", userRes.user.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    return (membership?.org_id as string | undefined) ?? DEFAULT_ORG_ID;
+    const orgId = memberships?.[0]?.org_id as string | undefined;
+    return orgId ?? DEFAULT_ORG_ID;
   } catch {
     return DEFAULT_ORG_ID;
   }
@@ -74,12 +80,13 @@ export async function requireOrgId(): Promise<string> {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { data: membership } = await sb
+  const { data: memberships } = await sb
     .from("memberships")
     .select("org_id")
     .eq("user_id", userRes.user.id)
-    .maybeSingle();
-  const orgId = membership?.org_id as string | undefined;
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const orgId = memberships?.[0]?.org_id as string | undefined;
   if (!orgId) {
     throw new Response(JSON.stringify({ error: "No org membership for user" }), {
       status: 403,

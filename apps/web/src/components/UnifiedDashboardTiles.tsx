@@ -16,6 +16,15 @@ type ApiResponse = {
   errors: string[];
 };
 
+const ZERO_METRICS: Metrics = {
+  callsThisWeek: 0,
+  leadsThisWeek: 0,
+  newOppsThisWeek: 0,
+  bookedThisWeek: 0,
+  outstandingAR: 0,
+  overdueCount: 0,
+};
+
 const USD = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -31,19 +40,25 @@ export function UnifiedDashboardTiles() {
     (async () => {
       try {
         const res = await fetch("/api/dashboard/unified", { cache: "no-store" });
-        const j: ApiResponse = await res.json();
-        if (!cancelled) setData(j);
+        const j = (await res.json()) as Partial<ApiResponse> & { error?: string };
+        if (cancelled) return;
+        // API may return {error: "..."} on 401/403 or partial shape on internal
+        // errors — coerce to the tile-safe shape so the component never crashes.
+        if (!res.ok || !j.metrics) {
+          setData({
+            metrics: ZERO_METRICS,
+            errors: [j.error ?? `HTTP ${res.status}`],
+          });
+          return;
+        }
+        setData({
+          metrics: { ...ZERO_METRICS, ...j.metrics },
+          errors: j.errors ?? [],
+        });
       } catch (e) {
         if (!cancelled) {
           setData({
-            metrics: {
-              callsThisWeek: 0,
-              leadsThisWeek: 0,
-              newOppsThisWeek: 0,
-              bookedThisWeek: 0,
-              outstandingAR: 0,
-              overdueCount: 0,
-            },
+            metrics: ZERO_METRICS,
             errors: [`fetch: ${(e as Error).message}`],
           });
         }
