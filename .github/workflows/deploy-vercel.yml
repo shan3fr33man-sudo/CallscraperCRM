@@ -34,17 +34,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Run vercel from the repo root — the project config has
+      # `rootDirectory=apps/web`, so running inside apps/web would cause
+      # Vercel to look for apps/web/apps/web/package.json.
       - name: Pull Vercel environment (production)
-        working-directory: apps/web
         run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build project with Vercel
-        working-directory: apps/web
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt artifacts to Vercel (production)
         id: deploy
-        working-directory: apps/web
         run: |
           DEPLOY_URL=$(npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "deployment_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
