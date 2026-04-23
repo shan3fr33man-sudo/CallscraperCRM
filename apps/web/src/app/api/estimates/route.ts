@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import {
   calculateEstimate,
@@ -44,8 +44,10 @@ async function loadFullTariff(
 
 /** GET /api/estimates — list estimates (filterable by opportunity_id, customer_id, status). */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const opportunityId = searchParams.get("opportunity_id");
   let q = sb.from("estimates").select("*").eq("org_id", orgId);
@@ -65,9 +67,11 @@ export async function GET(req: Request) {
  *     - Engine output → charges_json, subtotal, sales_tax, amount, tariff_snapshot
  */
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const options = (body.options ?? {}) as Record<string, unknown>;
   const insert: Record<string, unknown> = {

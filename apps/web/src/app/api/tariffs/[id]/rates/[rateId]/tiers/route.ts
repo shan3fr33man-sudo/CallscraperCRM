@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { createTierSchema } from "@callscrapercrm/pricing";
 
@@ -26,9 +26,11 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { rateId } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyOwnership(sb, rateId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -45,12 +47,14 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { rateId } = await params;
   const body = await parseBody(req, createTierSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyOwnership(sb, rateId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -67,12 +71,14 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { rateId } = await params;
   const { searchParams } = new URL(req.url);
   const tierId = searchParams.get("tier_id");
   if (!tierId) return NextResponse.json({ error: "tier_id required" }, { status: 400 });
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyOwnership(sb, rateId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

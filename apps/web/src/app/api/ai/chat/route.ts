@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { callscraperClient } from "@/lib/callscraper";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { logAiUsage } from "@/lib/ai-usage";
 
@@ -312,9 +312,11 @@ async function getAnthropicKey(orgId: string): Promise<string | null> {
 }
 
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as { messages: { role: "user" | "assistant"; content: string }[]; context?: Ctx };
   const { messages, context } = body;
-  const orgId = await getOrgId();
   const apiKey = await getAnthropicKey(orgId);
   if (!apiKey) {
     return NextResponse.json(

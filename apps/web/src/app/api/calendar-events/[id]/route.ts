@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = (await req.json()) as { starts_at?: string; ends_at?: string; title?: string; location?: string };
   const sb = crmClient();
-  const orgId = await getOrgId();
   const update: Record<string, unknown> = {};
   if (body.starts_at) update.starts_at = body.starts_at;
   if (body.ends_at) update.ends_at = body.ends_at;
@@ -42,9 +44,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   // Cross-tenant safety: scope delete to this org
   const { error } = await sb.from("calendar_events").delete().eq("id", id).eq("org_id", orgId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

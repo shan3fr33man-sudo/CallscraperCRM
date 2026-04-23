@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { emitEvent } from "./events";
+import {
+  DEFAULT_FROM_EMAIL,
+  applyTestOverride,
+  resolveResendKey,
+  sendEmail,
+} from "./resend";
 
 export type ActionType =
   | "send_template"
@@ -186,17 +192,68 @@ async function runAction(
           related_id: ev.related_id,
         });
       } else {
-        await supabase.from("email_logs").insert({
-          org_id: ev.org_id,
-          customer_id: customerId,
-          to_email: (ev.payload.customer_email as string) ?? null,
-          subject: interpolate((p.subject as string) ?? "", ctx),
-          body: rendered,
-          status: "queued",
-          template_key: templateKey ?? null,
-          related_type: ev.related_type,
-          related_id: ev.related_id,
+        // Resolve destination: explicit `to` on the action wins, then template
+        // subject-line targeting, then the customer's on-file email.
+        let tplSubject: string | undefined;
+        if (templateKey) {
+          const { data: tplMeta } = await supabase
+            .from("templates")
+            .select("subject")
+            .eq("org_id", ev.org_id)
+            .eq("key", templateKey)
+            .maybeSingle();
+          tplSubject = (tplMeta as { subject?: string } | null)?.subject;
+        }
+        const requestedTo =
+          (p.to as string) ??
+          (ev.payload.customer_email as string) ??
+          "";
+        const routed = applyTestOverride(requestedTo);
+        const subject = interpolate((p.subject as string) ?? tplSubject ?? "", ctx);
+
+        const { data: logRow } = await supabase
+          .from("email_logs")
+          .insert({
+            org_id: ev.org_id,
+            customer_id: customerId,
+            to_email: routed.to || null,
+            from_email: DEFAULT_FROM_EMAIL,
+            subject,
+            body: rendered,
+            status: "queued",
+            template_key: templateKey ?? null,
+            related_type: ev.related_type,
+            related_id: ev.related_id,
+          })
+          .select("id")
+          .single();
+
+        const apiKey = await resolveResendKey(supabase, ev.org_id);
+        if (!apiKey || !routed.to || !logRow) {
+          // No key or no recipient: leave the row queued for later backfill.
+          return;
+        }
+
+        const result = await sendEmail({
+          apiKey,
+          from: DEFAULT_FROM_EMAIL,
+          to: routed.to,
+          subject,
+          body: routed.overridden
+            ? `${rendered}\n\n---\n[test-routed from original: ${routed.original}]`
+            : rendered,
         });
+        await supabase
+          .from("email_logs")
+          .update({
+            status: result.ok ? "sent" : "error",
+            sent_at: new Date().toISOString(),
+          })
+          .eq("id", logRow.id);
+        if (!result.ok) {
+          // Surface the provider error up so automation_runs marks failed.
+          throw new Error(`resend send failed: ${result.error ?? "unknown"}`);
+        }
       }
       return;
     }

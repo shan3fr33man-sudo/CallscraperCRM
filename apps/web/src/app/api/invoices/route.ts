@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
 
 /** GET /api/invoices — list invoices (filterable by status, customer_id, job_id, opportunity_id). */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const customerId = searchParams.get("customer_id");
@@ -31,9 +33,11 @@ export async function GET(req: Request) {
 
 /** POST /api/invoices — manual invoice creation. */
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const lineItems = (body.line_items_json ?? []) as Array<{ subtotal: number }>;
   const subtotal = (body.subtotal as number | undefined) ??

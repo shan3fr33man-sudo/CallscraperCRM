@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -12,8 +12,10 @@ export const runtime = "nodejs";
  * Due Date, Item, Amount, Memo).
  */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") ?? "csv";
   const from = searchParams.get("from");

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { createModifierSchema } from "@callscrapercrm/pricing";
 
@@ -16,9 +16,11 @@ async function verifyTariff(
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { data, error } = await sb
     .from("tariff_modifiers")
@@ -30,12 +32,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = await parseBody(req, createModifierSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { data, error } = await sb
     .from("tariff_modifiers")

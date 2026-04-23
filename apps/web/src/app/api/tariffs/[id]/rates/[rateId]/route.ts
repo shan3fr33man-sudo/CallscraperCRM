@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { updateRateSchema } from "@callscrapercrm/pricing";
 
@@ -30,12 +30,14 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id, rateId } = await params;
   const body = await parseBody(req, updateRateSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   if (!(await verifyRateOwnership(sb, id, rateId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -51,9 +53,11 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string; rateId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id, rateId } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   if (!(await verifyRateOwnership(sb, id, rateId, orgId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });

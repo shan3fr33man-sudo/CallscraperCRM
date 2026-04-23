@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Cross-tenant safety: scope the update to this org
   const { data: est, error: eErr } = await sb

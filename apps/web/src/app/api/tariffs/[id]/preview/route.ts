@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { calculateEstimate, previewRequestSchema } from "@callscrapercrm/pricing";
 import type { FullTariff } from "@callscrapercrm/pricing";
 
@@ -8,9 +8,11 @@ export const runtime = "nodejs";
 
 /** POST /api/tariffs/[id]/preview — run the pricing engine against this tariff. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Validate input via zod
   const body = await req.json();

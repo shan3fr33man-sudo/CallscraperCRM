@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { signEstimateToken } from "@/lib/estimate-token";
 
@@ -37,8 +37,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     message?: string;
   };
   const channel = body.channel ?? "email";
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const { data, error } = await sb
     .from("estimates")

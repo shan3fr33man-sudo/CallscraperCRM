@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { stripUndefined } from "@/lib/validate";
 
@@ -9,10 +9,12 @@ export const runtime = "nodejs";
 const ALLOWED_FIELDS = ["title", "body", "due_at", "status", "type", "priority", "assigned_to", "completed_at"] as const;
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const raw = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Whitelist fields — never let the body set org_id, related_type, etc.
   const patch: Record<string, unknown> = {};

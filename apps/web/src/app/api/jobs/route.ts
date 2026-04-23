@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
   const customerId = url.searchParams.get("customer_id");
   const date = url.searchParams.get("date");
   const branchId = url.searchParams.get("branch_id");
   const sb = crmClient();
-  const orgId = await getOrgId();
   let q = sb.from("jobs").select("*").eq("org_id", orgId).order("service_date", { ascending: true }).limit(500);
   if (status && status !== "all") q = q.eq("status", status);
   if (customerId) q = q.eq("customer_id", customerId);

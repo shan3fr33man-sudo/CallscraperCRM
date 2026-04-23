@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { stripUndefined } from "@/lib/validate";
 
@@ -21,10 +21,12 @@ const ALLOWED_FIELDS = [
 ] as const;
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const raw = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const patch: Record<string, unknown> = {};
   for (const k of ALLOWED_FIELDS) if (k in raw) patch[k] = raw[k];

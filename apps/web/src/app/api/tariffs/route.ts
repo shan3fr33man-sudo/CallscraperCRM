@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { createTariffSchema } from "@callscrapercrm/pricing";
 
@@ -8,8 +8,10 @@ export const runtime = "nodejs";
 
 /** GET /api/tariffs — list tariffs (filterable by branch_id, service_type, archived). */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const branchId = searchParams.get("branch_id");
   const serviceType = searchParams.get("service_type");
@@ -39,11 +41,13 @@ export async function GET(req: Request) {
 
 /** POST /api/tariffs — create a new tariff. */
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = await parseBody(req, createTariffSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Verify branch belongs to this org before allowing the tariff to link to it
   if (body.branch_id) {

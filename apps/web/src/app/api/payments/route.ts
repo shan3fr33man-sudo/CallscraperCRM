@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -12,8 +12,10 @@ type PaymentStatus = (typeof VALID_STATUSES)[number];
 
 /** GET /api/payments — list payments (filterable). */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { searchParams } = new URL(req.url);
   const invoiceId = searchParams.get("invoice_id");
   const estimateId = searchParams.get("estimate_id");
@@ -61,8 +63,10 @@ export async function POST(req: Request) {
     );
   }
 
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Verify ownership of any referenced parent rows. Done in parallel.
   const [invRes, estRes] = await Promise.all([

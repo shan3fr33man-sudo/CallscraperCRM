@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { logAiUsage } from "@/lib/ai-usage";
 
@@ -42,6 +42,9 @@ function stripFences(s: string): string {
 }
 
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -53,7 +56,6 @@ export async function POST(req: Request) {
   if (!opportunity_id) return NextResponse.json({ error: "opportunity_id required" }, { status: 400 });
 
   const sb = crmClient();
-  const orgId = await getOrgId();
   const opp = await sb
     .from("opportunities")
     .select("id, customer_id, service_type, move_type, move_size, service_date, origin_json, destination_json, amount")

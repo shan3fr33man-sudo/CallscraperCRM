@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody, stripUndefined } from "@/lib/validate";
 import { updateTariffSchema } from "@callscrapercrm/pricing";
 
@@ -8,9 +8,11 @@ export const runtime = "nodejs";
 
 /** GET /api/tariffs/[id] — return tariff with all children eager-loaded. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const [tariffRes, ratesRes, modsRes, valsRes, capsRes, assignsRes] = await Promise.all([
     sb.from("tariffs").select("*").eq("id", id).eq("org_id", orgId).maybeSingle(),
@@ -55,12 +57,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 /** PATCH /api/tariffs/[id] — update tariff metadata. */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = await parseBody(req, updateTariffSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Branch ownership check if being reassigned
   if (body.branch_id) {
@@ -94,9 +98,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 /** DELETE /api/tariffs/[id] — soft-archive (we never hard-delete tariffs). */
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { error } = await sb.from("tariffs").update({ archived: true }).eq("id", id).eq("org_id", orgId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { call_id, text } = (await req.json()) as { call_id: string; text: string };
   if (!call_id || !text) return NextResponse.json({ error: "call_id + text required" }, { status: 400 });
   const crm = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await crm.rpc("add_activity_by_external_id", {
     p_org_id: orgId,
     p_object_key: "call",
@@ -21,11 +23,13 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const url = new URL(req.url);
   const callId = url.searchParams.get("call_id");
   if (!callId) return NextResponse.json({ error: "call_id required" }, { status: 400 });
   const crm = crmClient();
-  const orgId = await getOrgId();
   // Find the record for this external id, then list activities.
   const { data: obj } = await crm
     .from("objects")

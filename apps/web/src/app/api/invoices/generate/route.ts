@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -17,8 +17,10 @@ export async function POST(req: Request) {
   if (!body.estimate_id && !body.job_id) {
     return NextResponse.json({ error: "estimate_id or job_id required" }, { status: 400 });
   }
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const dueIn = body.due_in_days ?? 14;
   const dueDate = new Date(Date.now() + dueIn * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 

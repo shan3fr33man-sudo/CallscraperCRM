@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -34,8 +34,10 @@ const WRITABLE_FIELDS = [
 ] as const;
 
 export async function GET() {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Configs joined with branch display names for nicer UI labels.
   const [configs, branches] = await Promise.all([
@@ -56,13 +58,15 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as Record<string, unknown>;
   const brand_code = body.brand_code as string | undefined;
   if (!brand_code) {
     return NextResponse.json({ error: "brand_code required" }, { status: 400 });
   }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Fields where a negative value would corrupt downstream math (rates,
   // costs, fees). `sales_tax_pct` / `default_fuel_surcharge_pct` may be 0.

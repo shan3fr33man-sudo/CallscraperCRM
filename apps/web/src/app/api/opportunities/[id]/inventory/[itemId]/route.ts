@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -8,10 +8,12 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string; itemId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id, itemId } = await params;
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const allowed: Record<string, unknown> = {};
   for (const k of ["room_name", "item_name", "quantity", "weight_lbs", "cubic_feet", "is_heavy", "notes"]) {
@@ -34,9 +36,11 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string; itemId: string }> },
 ) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id, itemId } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { error } = await sb
     .from("inventory_items")
     .delete()

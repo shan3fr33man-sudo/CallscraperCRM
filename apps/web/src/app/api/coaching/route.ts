@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const url = new URL(req.url);
   const days = Number(url.searchParams.get("days") ?? 7);
   const since = new Date(Date.now() - days * 86400000).toISOString();
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const coaching = await sb
     .from("call_coaching")
@@ -76,6 +78,8 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  try { await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as { id: string; coach_notes?: string; mark_reviewed?: boolean };
   if (!body.id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const sb = crmClient();

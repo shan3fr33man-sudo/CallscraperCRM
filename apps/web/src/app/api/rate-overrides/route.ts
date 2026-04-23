@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -9,6 +9,8 @@ export const runtime = "nodejs";
 // usable before the tariff editor ships in a later phase.
 
 export async function GET() {
+  try { await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
   const { data, error } = await sb
     .from("tariff_modifiers")
@@ -21,9 +23,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as { kind: string; label?: string; formula_json?: Record<string, unknown> };
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Find or create the workspace default tariff so the FK is satisfied.
   let tariffId: string | null = null;

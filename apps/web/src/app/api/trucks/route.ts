@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -15,8 +15,10 @@ export const runtime = "nodejs";
  * doesn't block the whole dispatch board from rendering.
  */
 export async function GET() {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("trucks")
     .select("id,name,capacity")

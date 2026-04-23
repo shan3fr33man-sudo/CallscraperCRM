@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { resolveTariff } from "@callscrapercrm/pricing";
 
 export const runtime = "nodejs";
@@ -26,13 +26,15 @@ export const runtime = "nodejs";
  *   client that bypasses RLS.
  */
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const url = new URL(req.url);
   const branchId = url.searchParams.get("branch_id") || undefined;
   const serviceType = url.searchParams.get("service_type") || undefined;
   const opportunityType = url.searchParams.get("opportunity_type") || undefined;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Step 1: fetch this org's non-archived tariffs (id + name). This is the
   // ONLY gate between the caller and another tenant's data.

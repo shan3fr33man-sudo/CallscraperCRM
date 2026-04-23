@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -17,9 +17,11 @@ type InventoryRow = {
 
 /** GET /api/opportunities/[id]/inventory — list items grouped by room. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("inventory_items")
     .select("*")
@@ -57,10 +59,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 /** POST /api/opportunities/[id]/inventory — add a single item. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = (await req.json()) as InventoryRow;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("inventory_items")
     .insert({
@@ -82,10 +86,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
 /** PUT /api/opportunities/[id]/inventory — bulk replace. Body: { items: InventoryRow[] }. */
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = (await req.json()) as { items: InventoryRow[] };
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Wipe existing for this opportunity
   await sb.from("inventory_items").delete().eq("opportunity_id", id).eq("org_id", orgId);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { createHandicapSchema } from "@callscrapercrm/pricing";
 
@@ -16,9 +16,11 @@ async function verifyTariff(
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { data, error } = await sb.from("tariff_handicaps").select("*").eq("tariff_id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,12 +28,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = await parseBody(req, createHandicapSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { data, error } = await sb
     .from("tariff_handicaps")
@@ -43,12 +47,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   const handicapId = searchParams.get("handicap_id");
   if (!handicapId) return NextResponse.json({ error: "handicap_id required" }, { status: 400 });
   const sb = crmClient();
-  const orgId = await getOrgId();
   if (!(await verifyTariff(sb, id, orgId))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { error } = await sb.from("tariff_handicaps").delete().eq("id", handicapId).eq("tariff_id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

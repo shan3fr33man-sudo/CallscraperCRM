@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("shops")
     .select("*")
@@ -26,8 +28,10 @@ export async function POST(req: Request) {
   if (!body.name || !body.address) {
     return NextResponse.json({ error: "name and address required" }, { status: 400 });
   }
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("shops")
     .insert({

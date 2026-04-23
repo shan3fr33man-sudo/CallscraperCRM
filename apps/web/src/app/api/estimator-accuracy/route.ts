@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -36,8 +36,10 @@ type Row = {
 };
 
 export async function GET() {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Cap at 90 days of feedback — enough for meaningful drift stats, bounded
   // so page load stays fast as the estimator matures. The `LIMIT` is a

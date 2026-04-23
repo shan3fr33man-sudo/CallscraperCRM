@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { callscraperClient } from "@/lib/callscraper";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId, getOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -91,6 +91,8 @@ async function fromUpstream(): Promise<CallRow[]> {
 }
 
 export async function GET() {
+  try { await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   try {
     const crm = await fromCrm();
     if (crm.length > 0) return NextResponse.json({ calls: crm, source: "crm" });

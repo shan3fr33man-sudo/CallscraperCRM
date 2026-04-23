@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 import { parseBody } from "@/lib/validate";
 import { updateEstimateSchema } from "@callscrapercrm/pricing";
@@ -11,9 +11,11 @@ export const runtime = "nodejs";
  * GET /api/estimates/[id] — fetch a single estimate scoped to the caller's org.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("estimates")
     .select("*")
@@ -46,8 +48,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await parseBody(req, updateEstimateSchema);
   if (body instanceof Response) return body;
 
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   // Load current state so we can compute with missing fields and check status
   const { data: current, error: loadErr } = await sb

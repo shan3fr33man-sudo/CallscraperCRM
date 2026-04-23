@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 type Result = { type: string; id: string; label: string; sublabel: string; href: string };
 
 export async function GET(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
   if (!q) return NextResponse.json({ results: [] });
 
   const sb = crmClient();
-  const orgId = await getOrgId();
   const like = `%${q}%`;
   const results: Result[] = [];
 

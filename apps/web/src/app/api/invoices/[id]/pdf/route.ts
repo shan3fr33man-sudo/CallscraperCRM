@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { InvoicePdf } from "@/lib/pdf/invoice-template";
 import type { InvoicePdfProps } from "@/lib/pdf/invoice-template";
 import { createElement } from "react";
@@ -11,9 +11,11 @@ import type { DocumentProps } from "@react-pdf/renderer";
 export const runtime = "nodejs";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const { data: invoice, error } = await sb
     .from("invoices")

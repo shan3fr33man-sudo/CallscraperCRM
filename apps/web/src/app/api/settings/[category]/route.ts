@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 /** GET /api/settings/[category] — list all settings in a category. */
 export async function GET(_req: Request, { params }: { params: Promise<{ category: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { category } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("settings")
     .select("*")
@@ -21,11 +23,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ categor
 
 /** POST /api/settings/[category] — upsert a setting. Body: { key, value }. */
 export async function POST(req: Request, { params }: { params: Promise<{ category: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { category } = await params;
   const body = (await req.json()) as { key: string; value: unknown };
   if (!body.key) return NextResponse.json({ error: "key required" }, { status: 400 });
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("settings")
     .upsert(

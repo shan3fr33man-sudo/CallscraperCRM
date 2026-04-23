@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { parseBody } from "@/lib/validate";
 import { createRateSchema } from "@callscrapercrm/pricing";
 
@@ -8,9 +8,11 @@ export const runtime = "nodejs";
 
 /** GET /api/tariffs/[id]/rates — list rates for a tariff. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const sb = crmClient();
-  const orgId = await getOrgId();
   // Verify tariff belongs to org
   const { data: tariff } = await sb.from("tariffs").select("id").eq("id", id).eq("org_id", orgId).maybeSingle();
   if (!tariff) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -22,12 +24,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 /** POST /api/tariffs/[id]/rates — add a rate. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const { id } = await params;
   const body = await parseBody(req, createRateSchema);
   if (body instanceof Response) return body;
 
   const sb = crmClient();
-  const orgId = await getOrgId();
 
   const { data: tariff } = await sb.from("tariffs").select("id").eq("id", id).eq("org_id", orgId).maybeSingle();
   if (!tariff) return NextResponse.json({ error: "not found" }, { status: 404 });

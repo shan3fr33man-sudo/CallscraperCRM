@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crmClient } from "@/lib/crmdb";
-import { getOrgId } from "@/lib/auth";
+import { requireOrgId } from "@/lib/auth";
 import { emitEvent } from "@/lib/river";
 
 export const runtime = "nodejs";
@@ -32,9 +32,11 @@ type Row = {
 };
 
 export async function POST(req: Request) {
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const body = (await req.json()) as Record<string, unknown>;
   const sb = crmClient();
-  const orgId = await getOrgId();
   const { data, error } = await sb
     .from("calendar_events")
     .insert({
@@ -80,8 +82,10 @@ export async function GET(req: Request) {
   const start = url.searchParams.get("start");
   const end = url.searchParams.get("end");
 
+  let orgId: string;
+  try { orgId = await requireOrgId(); }
+  catch (res) { if (res instanceof Response) return res; throw res; }
   const sb = crmClient();
-  const orgId = await getOrgId();
   let q = sb.from("calendar_events").select("*").eq("org_id", orgId).order("starts_at", { ascending: true }).limit(500);
   if (kind) q = q.eq("kind", kind);
   if (branchId) q = q.eq("branch_id", branchId);
