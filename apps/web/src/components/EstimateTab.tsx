@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Send, FileText, Check, ExternalLink } from "lucide-react";
+import { Plus, Send, FileText, Check, ExternalLink, Sparkles, AlertCircle } from "lucide-react";
 import { InventoryEditor } from "@/components/InventoryEditor";
 import { DepositCollector } from "@/components/DepositCollector";
 import { SendEstimateDialog } from "@/components/SendEstimateDialog";
@@ -36,6 +36,8 @@ type Estimate = {
   deposit_amount: number;
   deposit_paid_at: string | null;
   created_at: string;
+  auto_generated?: boolean;
+  pricing_mode?: "local" | "long_distance" | null;
 };
 
 /**
@@ -277,6 +279,15 @@ function EstimateRow({
           <span className="text-xs text-muted-foreground">
             {estimate.estimate_type.replace("_", " ")}
           </span>
+          {estimate.auto_generated && (
+            <span
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800"
+              title="Auto-drafted by the estimator from historical comparable moves. Review before sending."
+            >
+              AUTO
+              {estimate.pricing_mode === "long_distance" ? " · LD" : ""}
+            </span>
+          )}
         </div>
         <div className="text-right">
           <div className="text-sm font-semibold">${estimate.amount.toFixed(2)}</div>
@@ -308,6 +319,10 @@ function EstimateRow({
               </div>
             )}
           </div>
+
+          {estimate.auto_generated && (
+            <AutoEstimateExplainer estimateId={estimate.id} />
+          )}
 
           <div className="flex gap-2 pt-2">
             <a
@@ -608,4 +623,190 @@ function coerceLineItems(raw: Array<Record<string, unknown>> | null): LineItem[]
     out.push(item);
   }
   return out;
+}
+
+/**
+ * Renders inside the expanded estimate row when `estimate.auto_generated` is
+ * true. Lazy-fetches the estimator_predictions row tied to this estimate and
+ * surfaces the human-readable explanation array + comparable sample count +
+ * confidence + margin status so agents can audit the auto-draft before
+ * sending. Silent on fetch error (non-critical to the rest of the UI).
+ */
+type PredictionPayload = {
+  id: string;
+  brand_code: string;
+  pricing_mode: "local" | "long_distance";
+  comparable_sample_n: number | null;
+  confidence: number;
+  margin_status: "ok" | "warn" | "block";
+  margin_pct: number;
+  driveway_review_required: boolean;
+  driveway_flags: Record<string, boolean>;
+  deadhead_skipped: boolean;
+  explanation: string[];
+  estimate_input: Record<string, unknown>;
+  materials: Array<{ sku: string; qty: number; unit_price?: number }>;
+  valuation: { recommended: string; declared_value?: number } | null;
+  inventory_totals: {
+    total_cu_ft?: number;
+    total_weight_lb?: number;
+    specialty_items?: string[];
+    oversized_tvs?: string[];
+  } | null;
+};
+
+function AutoEstimateExplainer({ estimateId }: { estimateId: string }) {
+  const [pred, setPred] = useState<PredictionPayload | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/estimates/${estimateId}/prediction`).then((r) => r.json());
+        if (!cancelled) setPred(r.prediction ?? null);
+      } catch {
+        /* silent */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [estimateId]);
+
+  if (loading || !pred) return null;
+
+  const confidencePct = Math.round(pred.confidence * 100);
+  const marginColor =
+    pred.margin_status === "ok"
+      ? "text-green-700"
+      : pred.margin_status === "warn"
+        ? "text-amber-700"
+        : "text-red-700";
+  const flagLabels = Object.entries(pred.driveway_flags)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+
+  return (
+    <div className="border border-purple-200 rounded-md bg-purple-50/50">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-purple-50"
+      >
+        <span className="flex items-center gap-2 text-xs font-medium text-purple-900">
+          <Sparkles className="w-3 h-3" />
+          Why these numbers?
+        </span>
+        <span className="flex items-center gap-2 text-[10px] text-purple-700">
+          <span>{pred.pricing_mode === "long_distance" ? "long-distance" : "local"}</span>
+          <span>·</span>
+          <span>confidence {confidencePct}%</span>
+          <span>·</span>
+          <span>{pred.comparable_sample_n ?? 0} comparable jobs</span>
+          <span>·</span>
+          <span className={marginColor}>margin {pred.margin_pct.toFixed(1)}%</span>
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="px-3 pb-3 space-y-2 border-t border-purple-200 pt-2 text-[11px] text-purple-950">
+          {pred.margin_status === "block" && (
+            <div className="flex items-start gap-1 rounded bg-red-100 px-2 py-1 text-red-800">
+              <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>
+                Margin blocked — this estimate was <strong>not</strong> auto-sent. Agent review required before quoting the customer.
+              </span>
+            </div>
+          )}
+          {pred.driveway_review_required && (
+            <div className="flex items-start gap-1 rounded bg-amber-100 px-2 py-1 text-amber-900">
+              <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>
+                Driveway flags: {flagLabels.join(", ") || "see StreetView"}. Shuttle fee added; please confirm before sending.
+              </span>
+            </div>
+          )}
+          {pred.deadhead_skipped && (
+            <div className="flex items-start gap-1 rounded bg-amber-100 px-2 py-1 text-amber-900">
+              <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>
+                No yards configured for this brand — deadhead fee skipped. Add dispatch yards in <a href="/settings/shops" className="underline">Settings → Dispatch Yards</a>.
+              </span>
+            </div>
+          )}
+
+          <div>
+            <div className="font-semibold mb-1">Reasoning trace</div>
+            <ul className="space-y-0.5 list-disc list-inside">
+              {pred.explanation.map((line, i) => (
+                <li key={i} className="text-purple-900">{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          {pred.inventory_totals && (
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              {pred.inventory_totals.total_cu_ft !== undefined && (
+                <ExplainerStat label="Cubic feet" value={pred.inventory_totals.total_cu_ft.toLocaleString()} />
+              )}
+              {pred.inventory_totals.total_weight_lb !== undefined && (
+                <ExplainerStat label="Billable lb" value={pred.inventory_totals.total_weight_lb.toLocaleString()} />
+              )}
+              {pred.inventory_totals.specialty_items && pred.inventory_totals.specialty_items.length > 0 && (
+                <ExplainerStat
+                  label="Specialty items"
+                  value={pred.inventory_totals.specialty_items.join(", ")}
+                />
+              )}
+              {pred.inventory_totals.oversized_tvs && pred.inventory_totals.oversized_tvs.length > 0 && (
+                <ExplainerStat
+                  label="Oversized TVs"
+                  value={pred.inventory_totals.oversized_tvs.length.toString()}
+                />
+              )}
+            </div>
+          )}
+
+          {pred.materials.length > 0 && (
+            <div>
+              <div className="font-semibold mb-1">Recommended materials</div>
+              <ul className="list-disc list-inside">
+                {pred.materials.map((m) => (
+                  <li key={m.sku}>
+                    {m.sku.replace(/_/g, " ")}: {m.qty}
+                    {m.unit_price ? ` × $${m.unit_price.toFixed(2)}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {pred.valuation && (
+            <div>
+              <div className="font-semibold mb-1">Valuation default (per 15-C Item 90)</div>
+              <div>
+                {pred.valuation.recommended === "full" ? "Replacement Cost" : "Basic ($0.72/lb)"}
+                {pred.valuation.declared_value
+                  ? ` — declared value $${pred.valuation.declared_value.toLocaleString()}`
+                  : ""}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExplainerStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] text-purple-700">{label}</div>
+      <div className="font-mono">{value}</div>
+    </div>
+  );
 }

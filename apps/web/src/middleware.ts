@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/_next/",
   "/favicon.ico",
   "/estimate/", // public customer-facing estimate pages, HMAC-token gated
+  "/embed/", // iframe-mountable routes (auth delegated to parent via postMessage)
 ];
 
 // Exact-match public paths (no prefix match) so e.g. /launch doesn't also

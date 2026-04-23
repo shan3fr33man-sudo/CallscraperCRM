@@ -1,0 +1,10 @@
+{
+  "name": "@callscrapercrm/estimator",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "zod": "^3.23.8"
+  }
+}

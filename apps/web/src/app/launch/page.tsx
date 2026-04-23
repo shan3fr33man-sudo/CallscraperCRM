@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyBridgeToken } from "@/lib/auth-bridge";
+import { consumeJti, verifyBridgeToken } from "@/lib/auth-bridge";
 import { crmClient } from "@/lib/crmdb";
 
 export const runtime = "nodejs";
@@ -24,10 +25,14 @@ export const dynamic = "force-dynamic";
  *   a pilot — one extra login per session is fine while the real SSO glue
  *   is scheduled for the Integration Sprint (post-this-sprint, pre-Stripe).
  *
+ * M4 (this sprint) adds:
+ *   - Single-use replay protection via `bridge_jti_denylist` table.
+ *   - Chooser UI for users whose upstream company_id maps to >1 CRM org.
+ *
  * Known-open for v1.2 (tracked in BLOCKERS.md):
- *   - Auto-mint CRM session from bridge claims via supabase.auth.admin
- *   - Chooser UI when multiple orgs match the upstream_company_id
- *   - Single-use token replay protection via a jti denylist table
+ *   - TODO v1.2: auto-mint CRM session here via
+ *     supabase.auth.admin.createUser + generateLink so the user lands
+ *     fully authenticated instead of being bounced to /login.
  */
 export default async function LaunchPage({
   searchParams,
@@ -59,6 +64,39 @@ export default async function LaunchPage({
     );
   }
 
+  // Single-use enforcement: the jti denylist rejects a second redemption of
+  // the same token. Tokens are already capped at ≤5min, so an attacker who
+  // scrapes a URL from a shoulder-surf or log still has to win a race; this
+  // closes that race. We consume BEFORE the org lookup so a replay attempt
+  // can't be used to probe workspace-linkage state either.
+  const consume = await consumeJti(
+    outcome.claims.jti,
+    outcome.claims.company_id,
+    outcome.claims.exp,
+  );
+  if (!consume.ok) {
+    if (consume.reason === "replay") {
+      console.warn("[launch] replay attempt", {
+        jti: outcome.claims.jti,
+        company_id: outcome.claims.company_id,
+      });
+      return (
+        <LaunchError
+          title="This link was already used"
+          detail="Bridge links are single-use for security. Head back to callscraper.com and click 'Open in CRM' again to generate a fresh one."
+        />
+      );
+    }
+    // reason === "system": surface a retryable error instead of a
+    // mis-labeled replay card.
+    return (
+      <LaunchError
+        title="CRM is temporarily unavailable"
+        detail="CRM is temporarily unavailable. Please try again shortly."
+      />
+    );
+  }
+
   const sb = crmClient();
 
   // Resolve the organization linked to this callscraper company_id
@@ -78,11 +116,23 @@ export default async function LaunchPage({
   }
 
   if (orgs.length > 1) {
-    // v1.1: pick the most recently updated org. v1.2 will add a chooser UI.
-    console.warn("[launch] multiple orgs linked to company_id; picking first", {
-      company_id: outcome.claims.company_id,
-      orgs: orgs.map((o) => o.id),
+    // Multi-org: forward to the chooser. We do NOT pass the token in the URL
+    // anymore (bookmarkable / shareable leaks workspace info). Instead, we
+    // set a short-lived, httpOnly server cookie scoped to the chooser path
+    // and redirect without query params. The chooser reads the jti from the
+    // cookie and looks up the already-consumed denylist row to recover
+    // company_id.
+    const jar = await cookies();
+    jar.set({
+      name: "crm_chooser",
+      value: outcome.claims.jti,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/launch/choose-org",
+      maxAge: 30,
     });
+    redirect("/launch/choose-org");
   }
 
   const orgId = orgs[0].id;
@@ -100,11 +150,16 @@ export default async function LaunchPage({
       .maybeSingle();
 
     if (activity?.record_id) {
+      // TODO v1.2: call supabase.auth.admin.createUser + generateLink here
+      // so the redirect lands the user inside an authenticated session.
+      // For M4 pilot, middleware redirects to /login first — acceptable.
       redirect(`/customers/${activity.record_id as string}`);
     }
     // Fall through to the org home if we couldn't resolve the call.
   }
 
+  // TODO v1.2: call supabase.auth.admin.createUser + generateLink here
+  // so the redirect lands the user inside an authenticated session.
   // No call_id or unresolved — land on the home page of the CRM.
   redirect("/");
 }

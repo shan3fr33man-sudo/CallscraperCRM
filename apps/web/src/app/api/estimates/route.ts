@@ -69,6 +69,7 @@ export async function POST(req: Request) {
   const sb = crmClient();
   const orgId = await getOrgId();
 
+  const options = (body.options ?? {}) as Record<string, unknown>;
   const insert: Record<string, unknown> = {
     org_id: orgId,
     opportunity_id: body.opportunity_id ?? null,
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
     estimate_type: body.estimate_type ?? "non_binding",
     estimate_number: body.estimate_number ?? null,
     deposit_amount: body.deposit_amount ?? 0,
+    auto_generated: options.auto_generated === true,
+    pricing_mode: (options.pricing_mode as string | undefined) ?? "local",
   };
 
   // If the caller explicitly passes tariff_id (either engine path or manual

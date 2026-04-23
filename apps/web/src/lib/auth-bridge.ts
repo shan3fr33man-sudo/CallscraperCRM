@@ -1,5 +1,6 @@
 // Node-only module: imports `node:crypto`. Do NOT re-export into client bundles.
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { crmClient } from "./crmdb";
 
 /**
  * Cross-product auth bridge for callscraper.com → CallscraperCRM.
@@ -250,4 +251,179 @@ export function verifyBridgeToken(token: string | null | undefined): VerifyOutco
 export function assertBridgeToken(token: string | null | undefined): BridgeClaims | null {
   const out = verifyBridgeToken(token);
   return out.ok ? out.claims : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Writeback tokens (v1w) — CRM → callscraper.com status badge endpoint.
+//
+// Different domain from bridge tokens (v1b). Writeback tokens are system-to-
+// system (no user identity) and carry only the IDs needed to resolve status
+// for a specific call. They share the same BRIDGE_SIGNING_SECRET but use a
+// distinct version prefix so a bridge token can NEVER accidentally validate
+// as a writeback token (or vice-versa) — domain separation is the whole
+// point of the prefix.
+//
+// Payload shape: { call_id, company_id, exp } — no sub, no email, no jti.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WRITEBACK_VERSION = "v1w";
+
+export interface WritebackClaims {
+  call_id: string;
+  company_id: string;
+  exp: number; // expires-at epoch seconds
+}
+
+export interface WritebackVerifyResult {
+  ok: true;
+  claims: WritebackClaims;
+}
+
+export interface WritebackVerifyFailure {
+  ok: false;
+  reason:
+    | "missing"
+    | "too_long"
+    | "malformed"
+    | "wrong_version"
+    | "bad_encoding"
+    | "bad_signature"
+    | "expired"
+    | "ttl_too_long"
+    | "missing_claim"
+    | "no_secret";
+}
+
+export type WritebackVerifyOutcome = WritebackVerifyResult | WritebackVerifyFailure;
+
+/**
+ * Mint a writeback token. Callscraper.com uses this (or its own equivalent)
+ * to sign tokens it sends to the CRM's writeback endpoint when refreshing
+ * badge state for a call card. Exposed in the CRM primarily for round-trip
+ * testing.
+ *
+ * Default TTL: 60 seconds. Max allowed TTL: 5 minutes (enforced by verifier).
+ */
+export function signWritebackToken(
+  claims: Omit<WritebackClaims, "exp"> & { exp?: number; ttl_seconds?: number },
+): string {
+  const secret = getSecret();
+  const now = Math.floor(Date.now() / 1000);
+  const exp = claims.exp ?? now + (claims.ttl_seconds ?? 60);
+  const payload: WritebackClaims = {
+    call_id: claims.call_id,
+    company_id: claims.company_id,
+    exp,
+  };
+  const payloadJson = JSON.stringify(payload);
+  const payloadB64 = b64url(payloadJson);
+  const signingInput = `${WRITEBACK_VERSION}.${payloadB64}`;
+  const sig = hmacSig(signingInput, secret);
+  return `${signingInput}.${b64url(sig)}`;
+}
+
+/**
+ * Verify a writeback token. Mirrors `verifyBridgeToken` but with the `v1w.`
+ * version prefix so tokens cannot cross domains. Returns a tagged outcome.
+ */
+export function verifyWritebackToken(token: string | null | undefined): WritebackVerifyOutcome {
+  if (!token) return { ok: false, reason: "missing" };
+  if (token.length > MAX_TOKEN_LENGTH) return { ok: false, reason: "too_long" };
+  const parts = token.split(".");
+  if (parts.length !== 3) return { ok: false, reason: "malformed" };
+  const [version, payloadB64, sigB64] = parts;
+  if (version !== WRITEBACK_VERSION) return { ok: false, reason: "wrong_version" };
+
+  let payloadJson: string;
+  let sig: Buffer;
+  try {
+    payloadJson = b64urlDecode(payloadB64).toString("utf8");
+    sig = b64urlDecode(sigB64);
+  } catch {
+    return { ok: false, reason: "bad_encoding" };
+  }
+
+  let secret: string;
+  try {
+    secret = getSecret();
+  } catch {
+    return { ok: false, reason: "no_secret" };
+  }
+
+  const expected = hmacSig(`${version}.${payloadB64}`, secret);
+  if (expected.length !== sig.length) return { ok: false, reason: "bad_signature" };
+  if (!timingSafeEqual(expected, sig)) return { ok: false, reason: "bad_signature" };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payloadJson);
+  } catch {
+    return { ok: false, reason: "bad_encoding" };
+  }
+
+  if (!parsed || typeof parsed !== "object") return { ok: false, reason: "malformed" };
+  const p = parsed as Partial<WritebackClaims>;
+
+  if (typeof p.call_id !== "string" || p.call_id.length === 0 || p.call_id.length > 256) {
+    return { ok: false, reason: "missing_claim" };
+  }
+  if (
+    typeof p.company_id !== "string" ||
+    p.company_id.length === 0 ||
+    p.company_id.length > MAX_COMPANY_ID_LENGTH
+  ) {
+    return { ok: false, reason: "missing_claim" };
+  }
+  if (typeof p.exp !== "number") return { ok: false, reason: "missing_claim" };
+
+  const now = Math.floor(Date.now() / 1000);
+
+  if (p.exp < now) return { ok: false, reason: "expired" };
+
+  // Defense in depth: writeback tokens, like bridge tokens, must not be used
+  // as long-lived credentials. We don't have iat here, so cap by exp-now
+  // (plus 60s clock-skew) against MAX_EXPIRY_SECONDS.
+  if (p.exp - now > MAX_EXPIRY_SECONDS + 60) return { ok: false, reason: "ttl_too_long" };
+
+  return {
+    ok: true,
+    claims: { call_id: p.call_id, company_id: p.company_id, exp: p.exp },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single-use JTI denylist for bridge tokens.
+//
+// Every accepted v1b. token's jti is inserted into `bridge_jti_denylist` with
+// its own `exp` (TTL-bounded ≤ 5min by the verifier). A unique-violation on
+// insert (Postgres 23505) means the token was already consumed — i.e. replay.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function consumeJti(
+  jti: string,
+  companyId: string,
+  expSeconds: number,
+): Promise<{ ok: true } | { ok: false; reason: "replay" | "system" }> {
+  try {
+    const sb = crmClient();
+    const { error } = await sb.from("bridge_jti_denylist").insert({
+      jti,
+      company_id: companyId,
+      exp: new Date(expSeconds * 1000).toISOString(),
+    });
+    if (!error) return { ok: true };
+    // Detect unique-violation across Postgres/PostgREST/Supabase wrappings.
+    const e = error as { code?: string; status?: number; message?: string };
+    const isDupe =
+      e.code === "23505" ||
+      e.status === 409 ||
+      (typeof e.message === "string" && /duplicate key|unique/i.test(e.message));
+    if (isDupe) return { ok: false, reason: "replay" };
+    // Non-duplicate error — log + return a system-error outcome instead of throwing.
+    console.error("[consumeJti] unexpected error:", error);
+    return { ok: false, reason: "system" };
+  } catch (e) {
+    console.error("[consumeJti] threw:", e);
+    return { ok: false, reason: "system" };
+  }
 }

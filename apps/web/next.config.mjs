@@ -28,6 +28,15 @@ export default {
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       },
+      {
+        source: "/embed/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://callscraper.com http://localhost:3000 http://localhost:3010" },
+          // Note: X-Frame-Options: ALLOW-FROM is deprecated. frame-ancestors is canonical.
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
     ];
   },
 };

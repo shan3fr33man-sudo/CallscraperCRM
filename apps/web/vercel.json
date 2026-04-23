@@ -1,4 +1,7 @@
 {
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && pnpm --filter @callscrapercrm/web build",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "crons": [
     { "path": "/api/sync/callscraper", "schedule": "*/15 * * * *" },
     { "path": "/api/agents/run-batch?limit=10&days=1", "schedule": "*/20 * * * *" },

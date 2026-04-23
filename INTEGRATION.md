@@ -282,6 +282,122 @@ Ken can reuse the exact test vectors in his own test suite.
 - [ ] For the pilot, configure the Nginx proxy or use a direct Vercel URL
 - [ ] Verify in dev: click button → lands in CRM with correct customer selected
 
+## Writeback endpoint
+
+Reverse direction from the bridge: callscraper.com asks the CRM "what's the
+status of call X?" and the CRM responds with a badge list that callscraper
+renders on its call card. This is the surface that unlocks shared status
+without shared auth.
+
+### Endpoint
+
+`POST /api/callscraper/writeback?t=<v1w_token>`
+
+- **Always JSON**, with `cache-control: no-store`.
+- **Body** (optional — the token carries the authoritative `call_id`):
+  ```json
+  { "call_id": "<callscraper-call-uuid>" }
+  ```
+  If the body's `call_id` is present and does not match the token, the
+  endpoint rejects with 401 (cross-binding guard).
+
+### Response
+
+```json
+{
+  "badges": [
+    { "label": "Booked · $2,450", "tone": "green", "link": "/customers/<uuid>" },
+    { "label": "Overdue invoice",  "tone": "red",   "link": "/customers/<uuid>" }
+  ]
+}
+```
+
+- `tone` is one of: `green | red | amber | blue | muted`.
+- `link` is optional (CRM-relative path). Callscraper may compose it with
+  the `/crm/` reverse-proxy prefix so clicks land on the right page.
+- Max 3 badges. Empty array is a valid response — render a neutral card.
+- Badge composition rules (subject to change; stable within v1):
+  - Opportunity → `booked` ⇒ green "Booked · $X" (X = max amount); else
+    `quoted` ⇒ blue "Quoted · $X"; else any ⇒ blue "Active opportunity".
+  - Invoice with `status='overdue'` ⇒ red "Overdue invoice".
+  - Tickets with `status='active'` and `priority >= 3` ⇒ amber "N open tickets".
+
+### Error codes
+
+- **200 OK**: always, including when zero badges apply or the call isn't
+  in the CRM yet (sync window — treat as empty badges, not an error).
+- **401 Unauthorized**: bad, expired, or cross-bound token. Coarse reason
+  only — specific `reason` codes are logged server-side but never returned.
+- **404 Not Found**: the token's `company_id` does not map to any CRM org.
+  The callscraper workspace hasn't been linked yet (see Workspace linking
+  above).
+
+### Token format
+
+Same HMAC envelope as the bridge, but with a distinct version prefix so the
+domains cannot cross:
+
+```
+v1w.<base64url(JSON payload)>.<base64url(HMAC-SHA256 of "v1w.<payload>")>
+```
+
+- **Prefix**: `v1w.` (writeback). Domain-separated from `v1b.` bridge tokens
+  and `v1.` estimate tokens — a token minted for one surface can NEVER
+  validate on another, even though they share the secret.
+- **TTL**: 5 minutes max (same cap as bridge). Default 60s.
+- **Payload**:
+  ```json
+  { "call_id": "...", "company_id": "...", "exp": 1736802060 }
+  ```
+  No user identity (`sub`/`email`/`jti`) — this is system-to-system.
+- **Signing secret**: same `BRIDGE_SIGNING_SECRET` env var as the bridge.
+  Rotating the bridge secret rotates writeback at the same time, which is
+  the intended behavior.
+
+### Reference implementation (Node.js)
+
+Mirrors the bridge snippet above but emits the `v1w.` prefix and a reduced
+claims set:
+
+```js
+const { createHmac } = require("node:crypto");
+
+function b64url(buf) {
+  return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function signWritebackToken(claims, secret) {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    call_id: claims.call_id,
+    company_id: claims.company_id,
+    exp: claims.exp ?? now + 60,
+  };
+  const payloadB64 = b64url(JSON.stringify(payload));
+  // Version prefix `v1w` (writeback) is domain-separated from `v1b` bridge
+  // and `v1` estimate tokens.
+  const signingInput = `v1w.${payloadB64}`;
+  const sig = createHmac("sha256", secret).update(signingInput).digest();
+  return `${signingInput}.${b64url(sig)}`;
+}
+
+// Usage:
+//   const token = signWritebackToken(
+//     { call_id: call.id, company_id: workspace.id },
+//     process.env.BRIDGE_SIGNING_SECRET
+//   );
+//   const res = await fetch(`https://<crm>/api/callscraper/writeback?t=${token}`, {
+//     method: "POST",
+//     headers: { "content-type": "application/json" },
+//     body: JSON.stringify({ call_id: call.id }),
+//   });
+//   const { badges } = await res.json();
+```
+
+The CRM's authoritative verifier lives at
+`apps/web/src/lib/auth-bridge.ts` (`signWritebackToken` /
+`verifyWritebackToken`). Ken can port the logic verbatim.
+
 ## Things NOT in v1.1 (tracked for the Integration Sprint)
 
 - Reverse sync (CRM → callscraper badges on call cards)

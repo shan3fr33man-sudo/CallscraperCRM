@@ -57,3 +57,34 @@ export async function requireAuth(): Promise<{
   const orgId = await getOrgId();
   return { user, orgId };
 }
+
+/**
+ * Strict version of getOrgId — throws if the user isn't authenticated or
+ * has no membership. Use this in routes where the default-org fallback
+ * would be a bug (e.g., settings writes, destructive ops). Legacy routes
+ * that intentionally want the fallback (cron, public webhooks) continue
+ * to use `getOrgId()`.
+ */
+export async function requireOrgId(): Promise<string> {
+  const sb = await createServerSupabase();
+  const { data: userRes } = await sb.auth.getUser();
+  if (!userRes?.user) {
+    throw new Response(JSON.stringify({ error: "Authentication required" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  const { data: membership } = await sb
+    .from("memberships")
+    .select("org_id")
+    .eq("user_id", userRes.user.id)
+    .maybeSingle();
+  const orgId = membership?.org_id as string | undefined;
+  if (!orgId) {
+    throw new Response(JSON.stringify({ error: "No org membership for user" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return orgId;
+}
