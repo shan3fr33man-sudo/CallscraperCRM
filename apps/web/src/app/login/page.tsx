@@ -3,6 +3,12 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
+// Demo credentials surfaced in the UI so operators (and any visitor) can
+// jump straight in without credential management. Safe for the current demo
+// stage; remove the button once real tenants onboard.
+const DEMO_EMAIL = "info@aperfectmover.com";
+const DEMO_PASSWORD = "Sayon143$";
+
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,19 +18,28 @@ function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next") ?? "/";
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function signInWith(creds: { email: string; password: string }) {
     setLoading(true);
     setError("");
     const sb = createBrowserSupabase();
-    const { error: err } = await sb.auth.signInWithPassword({ email, password });
+    const { error: err } = await sb.auth.signInWithPassword(creds);
     if (err) {
       setError(err.message);
       setLoading(false);
-      return;
+      return false;
     }
     router.push(next);
     router.refresh();
+    return true;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await signInWith({ email, password });
+  }
+
+  async function handleDemo() {
+    await signInWith({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
   }
 
   return (
@@ -70,6 +85,21 @@ function LoginForm() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-800">
+            <button
+              type="button"
+              onClick={handleDemo}
+              disabled={loading}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+            >
+              {loading ? "Signing in…" : "Try the demo (one click)"}
+            </button>
+            <p className="text-gray-500 text-xs mt-2 text-center">
+              Signs you in as <span className="text-gray-400">{DEMO_EMAIL}</span>
+            </p>
+          </div>
+
           <p className="text-gray-400 text-sm mt-6 text-center">
             No workspace?{" "}
             <a href="/signup" className="text-blue-400 hover:underline">

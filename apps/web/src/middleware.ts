@@ -18,8 +18,9 @@ const PUBLIC_PATHS = [
 ];
 
 // Exact-match public paths (no prefix match) so e.g. /launch doesn't also
-// open /launchpad if someone adds that route later.
-const PUBLIC_PATHS_EXACT = new Set<string>(["/launch"]);
+// open /launchpad if someone adds that route later. `/demo` performs its own
+// client-side Supabase sign-in with pre-filled demo credentials.
+const PUBLIC_PATHS_EXACT = new Set<string>(["/launch", "/demo"]);
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
