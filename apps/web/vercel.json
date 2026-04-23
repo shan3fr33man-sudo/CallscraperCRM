@@ -3,7 +3,7 @@
   "buildCommand": "cd ../.. && pnpm --filter @callscrapercrm/web build",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "crons": [
-    { "path": "/api/sync/callscraper", "schedule": "0 */6 * * *" },
+    { "path": "/api/sync/callscraper", "schedule": "0 8 * * *" },
     { "path": "/api/tasks/scan-due", "schedule": "0 14 * * *" }
   ]
 }
