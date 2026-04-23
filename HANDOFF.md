@@ -1,6 +1,9 @@
 # CallscraperCRM — Day 1 Operations
 
-Status: **GO** (Phases A–H + Launch L1–L6 + v1.1 Phase 3.5 Polish complete)
+Status: **LIVE on Vercel** — `https://callscrapercrm-live.vercel.app`. P0
+security patch pending — see `docs/HANDOFF_HYPERSPRINT.md` for the open
+items and next actions. If you are resuming mid-sprint, read that doc
+FIRST.
 
 **Latest sprint**: v1.1 Phase 3.5 shipped 2026-04-21 (12 modules, commits
 `b14b503` → `4964163`). Retrospective: `4964163`. See `PROGRESS.json` for
