@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Senior-friendly defaults */
+@layer base {
+  body {
+    @apply text-lg;
+  }
+
+  button {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  input, select, textarea {
+    @apply min-h-[48px];
+  }
+}
